@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="h-100" style="background-color: #85736e">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col">
+        <div class="card card-registration my-4">
+          <div class="row g-0">
+            <div class="col-xl-6 d-none d-xl-block">
+              <img src="https://i.pinimg.com/originals/67/8d/3e/678d3e48b285212ab703498ee3ad0465.jpg"
+                alt="Sample photo" class="img-fluid"
+                style="border-top-left-radius: .30rem; border-bottom-left-radius: .30rem;" />
+            </div>
+            <div class="col-xl-6">
+              <div class="card-body p-md-5 text-black">
+                <h3 class="mb-5 text-uppercase" style="color: #642424;">Registration</h3>
+
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <div class="form-outline">
+                      <p>
+                    {{ form.email.label }}<br>
+                    {{ form.email(class="form-control", type="email") }}<br>
+                    {% for error in form.email.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </p>
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-4">
+                    <div class="form-outline">
+                        <p>
+                            {{ form.password.label }}<br>
+                            {{ form.password(class="form-control", type="password") }}<br>
+                            {% for error in form.password.errors %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-end pt-3">
+                  <a class="btn" href="/" style="background-color: #85736e; color: #ffffff" class="btn btn-warning btn-lg ms-2">welcome</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

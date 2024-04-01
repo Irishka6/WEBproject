@@ -1,25 +1,68 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="section-title text-center mt-4 aos-init aos-animate" data-aos="fade-up" style="font-family:  serif; font-size: 4.5rem;">A master for you!</h1>
-<section class="blog-list px-3 py-5 p-md-5">
-    <div class="container single-col-max-width">
-        {% for item in range(5)%}
-        <div class="item mb-5" style="">
-            <div class="row g-3 g-xl-0">
-                <div class="col-2 col-xl-3">
-                    <img class="img-fluid post-thumb " src="https://gas-kvas.com/grafic/uploads/posts/2023-09/1695813044_gas-kvas-com-p-kartinki-nogtei-50.jpg" alt="изображение">
-                </div>
-                <div class="col">
-                    <h3 class="title mb-1"><a class="text-link" href="/master/<item>" style="color: #6b5e4d; font-size: 2.5rem"><ya-tr-span data-index="11-0" data-translated="true" data-source-lang="en" data-target-lang="ru" data-ch="0" data-type="trSpan" data-selected="false" style="visibility: initial !important;">Мастер маникюра</ya-tr-span></a></h3>
-                    <div class="intro"><ya-tr-span data-index="13-0" data-translated="true" data-source-lang="en" data-target-lang="ru" data-value="Lorem ipsum dolor sit amet, consectetuer adipiscing elit. " data-translation="Lorem ipsum dolor sit amet, consectetuer adipiscing elit. " data-ch="0" data-type="trSpan" data-selected="false" style="visibility: initial !important;">Классический маникюр - 650</ya-tr-span></div></div>
-                <div class="col-3">
-                    <a class="text-link" href="/zapis/<item>" style="color: #642424; font-size: 1.5rem;"><ya-tr-span data-index="14-0" data-translated="true" data-source-lang="en" data-target-lang="ru" data-ch="0" data-type="trSpan" style="visibility: initial !important;">Записаться →</ya-tr-span></a>
-                </div><!--//col-->
-            </div>
-        </div>
-    {% endfor %}
-    </div>
-</section>
+    <style>
+        body {
+            text-align: center;
+        }
 
+        .btn {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+<h1 class="section-title text-center mt-4 aos-init aos-animate" data-aos="fade-up" style="font-family:  serif; font-size: 4.5rem;">A master for you!</h1>
+<section class="categories overflow-hidden">
+    <div class="container">
+      <div class="open-up aos-init aos-animate" data-aos="zoom-out">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="cat-item image-zoom-effect">
+              <div class="image-holder">
+                <a href="/masters" class="btn">
+                  <img style="width: 350px; height: 500px;" src="https://i.pinimg.com/originals/64/dd/65/64dd65c1fee3bf6420a81ec18169f846.jpg" alt="categories" class="product-image img-fluid">
+                </a>
+              </div>
+              <div class="category-content">
+                <div class="product-button">
+                  <a href="/masters" class="btn btn-common text-uppercase">Hairdressers</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="cat-item image-zoom-effect">
+              <div class="image-holder">
+                <a href="/masters" class="btn">
+                  <img style="width: 350px; height: 500px;" src="https://mykaleidoscope.ru/uploads/posts/2023-05/1685083021_mykaleidoscope-ru-p-kofeinii-manikyur-mindal-instagram-25.png" alt="categories" class="product-image img-fluid">
+                </a>
+              </div>
+              <div class="category-content">
+                <div class="product-button">
+                  <a href="/masters" class="btn btn-common text-uppercase">manicure</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="cat-item image-zoom-effect">
+              <div class="image-holder">
+                <a href="/masters" class="btn">
+                  <img style="width: 350px; height: 500px;" src="https://sun1-22.userapi.com/s/v1/if1/_rzKeBVTH82LDMNl0wQYERpmEfJFHn0q0w9XAwKntAYEoDwD2XfIIcOFys2PO47ClcFtEw.jpg?size=667x999&quality=96&crop=0,0,667,1000&ava=1" alt="categories" class="product-image img-fluid">
+                </a>
+              </div>
+              <div class="category-content">
+                <div class="product-button">
+                  <a href="/masters" class="btn btn-common text-uppercase">makeup</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 {% endblock %}

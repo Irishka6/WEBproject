@@ -16,19 +16,20 @@
             <div class="col-xl-6">
               <div class="card-body p-md-5 text-black">
                 <h3 class="mb-5 text-uppercase" style="color: #642424;">Registration</h3>
-
+                <form method="post">
+                  {{ form.hidden_tag() }}
                 <div class="row">
                   <div class="col-md-6 mb-4">
                     <div class="form-outline">
                       <p>
-                    {{ form.email.label }}<br>
-                    {{ form.email(class="form-control", type="email") }}<br>
-                    {% for error in form.email.errors %}
-                        <div class="alert alert-danger" role="alert">
+                        {{ form.email.label }}<br>
+                        {{ form.email(class="form-control", type="email") }}<br>
+                        {% for error in form.email.errors %}
+                          <div class="alert alert-danger" role="alert">
                             {{ error }}
-                        </div>
-                    {% endfor %}
-                </p>
+                          </div>
+                        {% endfor %}
+                      </p>
                     </div>
                   </div>
                   <div class="col-md-6 mb-4">
@@ -44,10 +45,9 @@
                         </p>
                     </div>
                   </div>
+                  <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
                 </div>
-                <div class="d-flex justify-content-end pt-3">
-                  <a class="btn" href="/" style="background-color: #85736e; color: #ffffff" class="btn btn-warning btn-lg ms-2">welcome</a>
-                </div>
+                </form>
               </div>
             </div>
           </div>
@@ -56,4 +56,5 @@
     </div>
   </div>
 </section>
+<div>{{ message }}</div>
 {% endblock %}

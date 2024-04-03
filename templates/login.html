@@ -19,20 +19,16 @@
 
                 <div class="row">
                   <div class="col-md-6 mb-4">
-                    <div class="form-outline">
-                      <p>
-                    {{ form.email.label }}<br>
-                    {{ form.email(class="form-control", type="email") }}<br>
-                    {% for error in form.email.errors %}
-                        <div class="alert alert-danger" role="alert">
-                            {{ error }}
-                        </div>
-                    {% endfor %}
-                </p>
-                    </div>
-                  </div>
-                  <div class="col-md-6 mb-4">
-                    <div class="form-outline">
+                      <form action="" method="post" style="width: 400px">
+                          <p>
+                            {{ form.email.label }}<br>
+                            {{ form.email(class="form-control", type="email") }}<br>
+                            {% for error in form.email.errors %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </p>
                         <p>
                             {{ form.password.label }}<br>
                             {{ form.password(class="form-control", type="password") }}<br>
@@ -42,18 +38,16 @@
                                 </div>
                             {% endfor %}
                         </p>
-                    </div>
+                        <p>{{ form.submit(type="submit", class="btn", formaction="/mast", style="background-color:#b5aaa7; color:#ffffff; width: 180px; height: 50px") }}</p>
+                      </form>
                   </div>
                 </div>
-                <div class="d-flex justify-content-end pt-3">
-                  <a class="btn" href="/" style="background-color: #85736e; color: #ffffff" class="btn btn-warning btn-lg ms-2">welcome</a>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+    </div>
 </section>
 {% endblock %}

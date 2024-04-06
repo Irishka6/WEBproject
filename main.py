@@ -2,9 +2,8 @@ from flask import Flask, render_template, redirect, session
 from flask_login import login_user, LoginManager
 from flask_restful import abort, Api
 from data import db_session
-import data.db_session
 from api.users_resources import UsersResources, UsersListResources
-from data.users import Users
+from data.users import Users, Masters, Clients
 from form.loginform import LoginForm
 
 

@@ -1,6 +1,8 @@
 from flask import Flask, render_template, redirect, url_for, request, session
 from form.loginform import LoginForm
 from form.registr import RegisterForm
+from form.regmast import RegisterFormMaster
+from PIL import Image
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -52,7 +54,25 @@ def reg():
 
 @app.route("/mast", methods=["POST"])
 def move_forward():
-    return "fghjk"
+    form = RegisterFormMaster()
+    return render_template("regmas.html", name='', form=form)
+
+@app.route("/stranichca")
+def stranichka():
+    im = Image.open('img/par.jpg')# загружается аватарка сохраненая при регестрации
+    pi = im.load()
+    r, g, b, total = 0, 0, 0, 0
+    x, y = im.size  # ширина (x) и высота (y) изображения
+    for i in range(x):
+        for j in range(y):
+            total += 1
+            r += pi[i, j][0]
+            g += pi[i, j][1]
+            b += pi[i, j][2]
+    rgb = str((r // total, g // total, b // total))
+    # поле аватар заменить путем к фото которое сохраняется в папку при просмотре а после удаляеется
+    return render_template("stranighka.html", name='', foto=rgb, prais='Маникюр-650', sety='сылки', avatar="https://i.pinimg.com/originals/64/dd/65/64dd65c1fee3bf6420a81ec18169f846.jpg")
+
 
 if __name__ == '__main__':
     main()

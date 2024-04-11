@@ -5,10 +5,8 @@ from wtforms.validators import DataRequired, ValidationError
 
 class RegisterFormMaster(FlaskForm):
     foto = FileField('Выберете аватарку')
-    profeshon = SelectField('Спициальность', choices=['Мастер маникюра(педикюра)', 'парикмахер', 'визажист'])
-    pris = TextAreaField('Прайс', validators=[DataRequired()])
+    profeshon = SelectField('Спициальность', choices=['Мастер маникюра(педикюра)', 'Парикмахер', 'Визажист'])
     adress = StringField('Адрес (где будет предоставляться услуга)', validators=[DataRequired()])
-    vk = StringField('VK')
-    inst = StringField('Instagram')
-    telegram = StringField('Telegram')
+    vk = StringField('VK(необязательно)')
+    telegram = StringField('Telegram(необязательно)')
     submit = SubmitField('Создать станичку')

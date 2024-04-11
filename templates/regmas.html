@@ -14,8 +14,16 @@
                 <div class="row">
                     <div class="col-md-6 mb-4">
                         <div class="form-group">
-                            <input id="src" type="file"/>
-                            <img id="target" width="200" height="200"/>
+                            <div class="container" style="width:350px">
+                                <div class="row">
+                                    <div class="col-md-8" >
+                                        <img id="target" width="200" height="200"/>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <input id="src" type="file"/>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -32,15 +40,6 @@
                         {% endfor %}
                             </p>
                             <p>
-                                {{ form.pris.label }}<br>
-                                {{ form.pris(class="form-control") }}<br>
-                                {% for error in form.pris.errors %}
-                                    <p class="alert alert-danger" role="alert">
-                                        {{ error }}
-                                    </p>
-                                {% endfor %}
-                            </p>
-                            <p>
                                 {{ form.adress.label }}<br>
                                 {{ form.adress(class="form-control") }}<br>
                                 {% for error in form.adress.errors %}
@@ -53,15 +52,6 @@
                                 {{ form.vk.label }}<br>
                                 {{ form.vk(class="form-control") }}<br>
                                 {% for error in form.vk.errors %}
-                                    <p class="alert alert-danger" role="alert">
-                                        {{ error }}
-                                    </p>
-                                {% endfor %}
-                            </p>
-                            <p>
-                                {{ form.inst.label }}<br>
-                                {{ form.inst(class="form-control") }}<br>
-                                {% for error in form.inst.errors %}
                                     <p class="alert alert-danger" role="alert">
                                         {{ error }}
                                     </p>

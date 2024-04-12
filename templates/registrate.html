@@ -20,25 +20,26 @@
                 <div class="row">
                     <div class="col-md-6 mb-4">
                       <form action="" method="post" style="width: 400px">
+                          {{ form.hidden_tag() }}
                           <p>
-                        {{ form.email.label }}<br>
-                        {{ form.email(class="form-control", type="email") }}<br>
-                        {% for error in form.email.errors %}
-                            <div class="alert alert-danger" role="alert">
-                                {{ error }}
-                            </div>
-                        {% endfor %}
-                            </p>
-                            <p>
+                                {{ form.email.label }}<br>
+                                {{ form.email(class="form-control", type="email") }}<br>
+                                {% for error in form.email.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p>
+                          <p>
                                 {{ form.name.label }}<br>
                                 {{ form.name(class="form-control") }}<br>
                                 {% for error in form.name.errors %}
-                                    <p class="alert alert-danger" role="alert">
+                                    <div class="alert alert-danger" role="alert">
                                         {{ error }}
-                                    </p>
+                                    </div>
                                 {% endfor %}
-                            </p>
-                            <p>
+                          </p>
+                          <p>
                                 {{ form.password.label }}<br>
                                 {{ form.password(class="form-control", type="password") }}<br>
                                 {% for error in form.password.errors %}
@@ -46,26 +47,27 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
-                            </p>
-                            <p>
+                          </p>
+                          <p>
                                 {{ form.password_again.label }}<br>
                                 {{ form.password_again(class="form-control", type="password") }}<br>
                                 {% for error in form.password_again.errors %}
-                                    <p class="alert alert-danger" role="alert">
+                                    <div class="alert alert-danger" role="alert">
                                         {{ error }}
-                                    </p>
+                                    </div>
                                 {% endfor %}
-                            </p>
-                          <div class="container px-15">
-                              <div class="row gx-5">
-                                  <div class="col-6">
-                                    <p>{{ form.submit2(type="submit", class="btn", formaction="/login", style="background-color:#b5aaa7; color:#ffffff; width: 180px;  height: 50px") }}</p>
-                                  </div>
-                                  <div class="col-6">
-                                    <p>{{ form.submit(type="submit", class="btn", formaction="/mast", style="background-color:#b5aaa7; color:#ffffff; width: 180px; height: 50px") }}</p>
-                                  </div>
-                              </div>
-                          </div>
+                          </p
+                          <p>
+                                {{ form.use.label }}<br>
+                                {{ form.use(class="form-control") }}<br>
+                                {% for error in form.use.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p>
+                          <p>{{ form.submit(type="submit", class="btn", style="background-color:#b5aaa7; color:#ffffff; width: 180px; height: 50px") }}</p>
+                          {{message}}
                       </form>
                     </div>
                 </div>

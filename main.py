@@ -1,5 +1,8 @@
+import string
+from random import choice
+
 from flask import Flask, render_template, redirect, session, request
-from flask_login import login_user, LoginManager
+from flask_login import login_user, LoginManager, current_user, login_required, logout_user
 from flask_restful import abort, Api
 from data import db_session
 from api.users_resources import UsersResources, UsersListResources
@@ -16,12 +19,19 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 api.add_resource(UsersListResources, '/api/v2/users')
 api.add_resource(UsersResources, '/api/v2/users/<int:user_id>')
+app.secret_key = ''.join(choice(string.ascii_letters) for _ in range(30))
 
 
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(Users).get(user_id)
+    return db_sess.query(Users).filter_by(id=user_id).first()
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
 
 
 def main():
@@ -30,21 +40,19 @@ def main():
 
 
 @app.route("/", methods=['GET', 'POST'])
-def index1(name=''):
-    return render_template("index.html", name=name)
+def index1():
+    return render_template("index.html")
 
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        #db_sess = db_session.create_session()
-        #user = db_sess.query(User).filter(User.email == form.email.data).first()
-        #if user and user.check_password(form.password.data):
-         #   login_user(user, remember=form.remember_me.data)
-         #   session['guest'] = user.name
-        return redirect("/")
-
+        db_sess = db_session.create_session()
+        user = db_sess.query(Users).filter(Users.email == form.email.data).first()
+        if user.password == form.password.data:
+           login_user(user)
+           return redirect("/")
     return render_template('login.html', title='Авторизация', form=form)
 
 
@@ -57,32 +65,45 @@ def masters():
 def reg():
     form = RegisterForm()
     if form.validate_on_submit():
-        if request.method == 'POST':
-            button_name = request.form['button']
-            if button_name == 'mast':
-                return render_template("/regmas")
-            if button_name == 'klint':
-                return redirect('/login')
-    #   if form.password.data != form.password_again.data:
-     #       return render_template('register.html', title='Регистрация',
-      #                             form=form,
-       #                            message="Пароли не совпадают")
-        #db_sess = db_session.create_session()
-        #if db_sess.query(User).filter(User.email == form.email.data).first():
-         #   return render_template('register.html', title='Регистрация',
-          #                         form=form,
-           #                        message="Такой пользователь уже есть")
+        if form.password.data != form.password_again.data:
+            return render_template("registrate.html", name='', title='Регистрация',
+                                   form=form,
+                                   message="Пароли не совпадают")
+        db_sess = db_session.create_session()
+        if db_sess.query(Users).filter(Users.email == str(form.email.data)).first():
+            return render_template("registrate.html", name='', title='Регистрация',
+                                   form=form,
+                                   message="Такой пользователь уже есть")
+
+        if form.use.data == 'Мастер':
+            db_sess = db_session.create_session()
+            print(form.use.data)
+            user = Masters(nick_name=form.name.data,
+                         password=form.password.data,
+                         email=form.email.data)
+            db_sess.add(user)
+            db_sess.commit()
+            return redirect("/mast")
+        else:
+            db_sess = db_session.create_session()
+            print(form.use.data)
+            user = Clients(nick_name=form.name.data,
+                           password=form.password.data,
+                           email=form.email.data)
+            db_sess.add(user)
+            db_sess.commit()
+            return redirect("/login")
     return render_template("registrate.html", name='', form=form)
 
 
-@app.route("/mast", methods=["POST"])
+@app.route("/mast", methods=["GET", "POST"])
 def move_forward():
     form = RegisterFormMaster()
     return render_template("regmas.html", name='', form=form)
 
 @app.route("/stranichca")
 def stranichka():
-    im = Image.open('img/par.jpg')# загружается аватарка сохраненая при регестрации
+    im = Image.open('static/img/par.jpg')# загружается аватарка сохраненая при регестрации
     pi = im.load()
     r, g, b, total = 0, 0, 0, 0
     x, y = im.size  # ширина (x) и высота (y) изображения
@@ -93,10 +114,12 @@ def stranichka():
             g += pi[i, j][1]
             b += pi[i, j][2]
     rgb = str((r // total, g // total, b // total))
-    # поле аватар заменить путем к фото которое сохраняется в папку при просмотре а после удаляеется
-    return render_template("stranighka.html", name='', foto=rgb, prais='Маникюр-650', sety='сылки', avatar="https://i.pinimg.com/originals/64/dd/65/64dd65c1fee3bf6420a81ec18169f846.jpg")
+    # поле аватар заменить путем к фото которое сохраняется в папку при просмотреа после удаляеется
+    return render_template("stranighka.html", name='', foto=rgb, prais='Маникюр-650', sety='сылки', avatar="static/img/par.jpg")
 
-
+@app.route("/zapis")
+def zapis():
+    pass
 
 if __name__ == '__main__':
     main()

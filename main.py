@@ -10,6 +10,7 @@ from data.users import Users, Masters, Clients
 from form.loginform import LoginForm
 from form.registr import RegisterForm
 from form.regmast import RegisterFormMaster
+from form.dobyslyg import DobyslForm
 from PIL import Image
 
 app = Flask(__name__)
@@ -83,7 +84,7 @@ def reg():
                          email=form.email.data)
             db_sess.add(user)
             db_sess.commit()
-            return redirect("/mast")
+            return redirect("/login")
         else:
             db_sess = db_session.create_session()
             print(form.use.data)
@@ -96,17 +97,21 @@ def reg():
     return render_template("registrate.html", name='', form=form)
 
 
-@app.route("/mast", methods=["GET", "POST"])
-def move_forward():
+@app.route("/mast/<int:id>", methods=["GET", "POST"])
+def move_forward(id):
     form = RegisterFormMaster()
+    # здесь добавить вставку уже имеющихся значенй взятых из БД по айди мастера
+    if form.validate_on_submit():
+        # здесь изменить в БД нововведенные данные форма называется regmast.py in form
+        return redirect("/login")
     return render_template("regmas.html", name='', form=form)
 
-@app.route("/stranichca")
+@app.route("/stranichca") # надо добавить /int:id как только будешь связывать с БД мастеров
 def stranichka():
-    im = Image.open('static/img/par.jpg')# загружается аватарка сохраненая при регестрации
+    im = Image.open('static/img/par.jpg')# загружается аватарка сохраненая d БД
     pi = im.load()
     r, g, b, total = 0, 0, 0, 0
-    x, y = im.size  # ширина (x) и высота (y) изображения
+    x, y = im.size
     for i in range(x):
         for j in range(y):
             total += 1
@@ -115,11 +120,20 @@ def stranichka():
             b += pi[i, j][2]
     rgb = str((r // total, g // total, b // total))
     # поле аватар заменить путем к фото которое сохраняется в папку при просмотреа после удаляеется
-    return render_template("stranighka.html", name='', foto=rgb, prais='Маникюр-650', sety='сылки', avatar="static/img/par.jpg")
+    # тут надо достать все данные по мастеру прям все и загрузить в render_template
+    return render_template("stranighka.html", name='', foto=rgb, prais='Маникюр-650', sety='сылки', avatar="static/img/par.jpg", ysluga=[["Маникюр", "1600", "1час 30 мин"], ["Маникюр", "1600", "1час 30 мин"]])
 
 @app.route("/zapis")
 def zapis():
     pass
+
+@app.route("/dobysl")
+def dobysl():
+    form = DobyslForm()
+    if form.validate_on_submit():
+        #  тут нужно сохранить то что введенно в форме в БД
+        return redirect("/stranichca")
+    return render_template("dobysl.html", form=form)
 
 if __name__ == '__main__':
     main()

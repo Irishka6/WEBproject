@@ -9,4 +9,4 @@ class RegisterFormMaster(FlaskForm):
     adress = StringField('Адрес (где будет предоставляться услуга)', validators=[DataRequired()])
     vk = StringField('VK(необязательно)')
     telegram = StringField('Telegram(необязательно)')
-    submit = SubmitField('Создать станичку')
+    submit = SubmitField('Сохранить изменения')

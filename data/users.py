@@ -11,10 +11,6 @@ class Users(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'Users'
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
 
-    type = sa.Column(sa.String, nullable=False)
-    nick_name = sa.Column(sa.String, nullable=False)
-    password = sa.Column(sa.String, nullable=False)
-
     type = sa.Column(sa.String(32), nullable=False)
     nick_name = sa.Column(sa.String(40), nullable=False)
     password = sa.Column(sa.String(30), nullable=False)

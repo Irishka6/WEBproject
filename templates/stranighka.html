@@ -12,16 +12,61 @@
             <div class="bg-white shadow rounded overflow-hidden" >
                 <div class="px-4 pt-0 pb-4" style="background: rgb{{foto}};">
                     <div class="media align-items-end profile-header" >
-                        <div class="profile mr-3" style="transform: translateY(5rem);"><img src={{avatar}} alt="..." width="300" class="rounded mb-2 img-thumbnail"><a href="#" class="btn btn-dark btn-sm btn-block">Edit profile</a></div>
-                        <div class="media-body mb-5 text-white">
+                        <div class="profile mr-3" style="transform: translateY(5rem);"><img src={{avatar}} alt="..." width="300" class="rounded mb-2 img-thumbnail"></div>
+
+                            <div class="media-body mb-5 text-white">
+
                             <h1 class="mt-0 mb-0">{{ current_user.nick_name }}</h1>
                             <p class="small mb-4" style="font-size: 2rem"> <i class="fa fa-map-marker mr-2"></i>{{prais}}</p>
                             <p class="small mb-4" style="font-size: 1.75rem"> <i class="fa fa-map-marker mr-2"></i>{{sety}}</p>
+                                <div class="container" >
+                                    <div class="row">
+                                        <div class="col">
+                                            <a href="/mast" class="btn btn-dark btn-sm btn-block">Изменить профиль</a>
+                                        </div>
+                                        <div class="col">
+                                            <p>
+                                                <button class="btn btn-dark btn-sm btn-block"  type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                                    Прайс
+                                                </button>
+                                            </p>
+                                        </div>
+                                        <div class="col">
+                                            <a href="/dobysl" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
+                                        </div>
+                                    </div>
+                                </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="py-4 px-4">
+                                <div class="collapse" id="collapseExample">
+                                    <div class="card card-body">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th scope="col">Название услуги</th>
+                                                <th scope="col">Стоймость</th>
+                                                <th scope="col">Длительность процедуры</th>
+                                                <th scope="col">Состояние</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for itim in ysluga %}
+                                            <tr>
+                                                <td>{{itim[0]}}</td>
+                                                <td>{{itim[1]}}</td>
+                                                <td>{{itim[2]}}</td>
+                                                <td><a href="/del" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
+                                            </tr>
+
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                    </div>
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <h5 class="mb-0">Recent photos</h5><a href="#" class="btn btn-link text-muted">Show all</a>
                     </div>

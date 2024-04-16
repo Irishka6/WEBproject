@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="h-100" style="background-color: #85736e" xmlns="http://www.w3.org/1999/html">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col">
+        <div class="card card-registration my-4">
+          <div class="row g-0">
+            <div class="col-xl-6 d-none d-xl-block">
+              <img src="https://i.pinimg.com/originals/34/14/37/34143742f7a1ec826e55c783ec84d268.png"
+                alt="Sample photo" class="img-fluid"
+                style="border-top-left-radius: .30rem; border-bottom-left-radius: .30rem; height: 850px; width: 700px"/>
+            </div>
+            <div class="col-xl-6">
+              <div class="card-body p-md-5 text-black">
+                <h3 class="mb-5 text-uppercase" style="color: #642424;">Registration</h3>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                      <form action="" method="post" style="width: 400px">
+                          {{ form.hidden_tag() }}
+                          <p>
+                                {{ form.email.label }}<br>
+                                {{ form.email(class="form-control", type="email") }}<br>
+                                {% for error in form.email.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p>
+                          <p>
+                                {{ form.name.label }}<br>
+                                {{ form.name(class="form-control") }}<br>
+                                {% for error in form.name.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p>
+                          <p>
+                                {{ form.password.label }}<br>
+                                {{ form.password(class="form-control", type="password") }}<br>
+                                {% for error in form.password.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p>
+                          <p>
+                                {{ form.password_again.label }}<br>
+                                {{ form.password_again(class="form-control", type="password") }}<br>
+                                {% for error in form.password_again.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p
+                          <p>
+                                {{ form.use.label }}<br>
+                                {{ form.use(class="form-control", id="combo") }}<br>
+                                {% for error in form.use.errors %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                          </p>
+                          <p>{{ form.submit(type="submit", class="btn", style="background-color:#b5aaa7; color:#ffffff; width: 180px; height: 50px") }}</p>
+                          {{message}}
+                      </form>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

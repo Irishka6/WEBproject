@@ -2,22 +2,31 @@ from flask import jsonify
 from flask_restful import Resource, abort
 from api.parser import Parser
 from data import db_session
+from data.images import Images
 from data.users import Users, Masters, Clients
-from data.category import Category, create_category
+from data.category import Category
 
 
+# Класс для просмотра, удаления и изменения пользователя с помощью API
 class UsersResources(Resource):
     def __init__(self):
-        self.parser = Parser()
+        self.parser = Parser()  # Инициализация парсера для изменения пользователя
         self.parser.user_update()
 
+    # Получение данных пользователя по id
     def get(self, user_id):
         abort_if_users_not_found(user_id)
         session = db_session.create_session()
         user = session.query(Users).get(user_id)
-        return jsonify({'users': user.to_dict(
-            only=('id', 'type', 'nick_name', 'number', 'email', 'password'))})
+        if user.type == 'Clients':
+            return jsonify({'users': user.to_dict(
+                only=('id', 'type', 'nick_name', 'email', 'hashed_password'))})
+        elif user.type == 'Masters':
+            return jsonify({'users': user.to_dict(
+                only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'description', 'category', 'address',
+                      'social', 'images', 'registrate'))})
 
+    # Удаление пользователя по id
     def delete(self, user_id):
         abort_if_users_not_found(user_id)
         session = db_session.create_session()
@@ -26,83 +35,84 @@ class UsersResources(Resource):
         session.commit()
         return jsonify({'success': 'OK'})
 
+    # Изменение пользователя
     def post(self, user_id):
         args = self.parser.parse_args()
         abort_if_users_not_found(user_id)
-        abort_if_type_invalid(args['type'])
         session = db_session.create_session()
         user = session.query(Users).get(user_id)
         user.nick_name = args['nick_name'] if args['nick_name'] is not None else user.nick_name
-        user.name = args['name'] if args['name'] is not None else user.name
-        user.surname = args['surname'] if args['surname'] is not None else user.surname
-        user.number = args['number'] if args['number'] is not None else user.number
         user.email = args['email'] if args['email'] is not None else user.email
-        user.password = args['password'] if args['password'] is not None else user.password
+        if args['password'] is not None:
+            user.set_password(args['password'])
         if user.type == 'Masters':
             user.description = args['description'] if args['description'] is not None else user.description
+            user.address = args['address'] if args['address'] is not None else user.address
+            user.social = args['social'] if args['social'] is not None else user.social
             if args['category'] is not None:
-                c = session.query(Category).filter(Category.id==args['category']).first()
-                if c is None:
-                    create_category()
-                    c = session.query(Category).filter(Category.id == args['category']).first()
+                c = session.query(Category).filter(Category.name==args['category']).first()
                 user.category[0] = c
-        elif user.type == 'Clients':
-            user.appointments_ids = args['appointments_ids'] \
-                if args['appointments_ids'] is not None else user.appointments_ids
+        # elif user.type == 'Clients':
         session.commit()
         return jsonify({'success': 'OK'})
 
 
+# Класс для получения пользователя в виде списка и добавления Услуг с помощью API
 class UsersListResources(Resource):
     def __init__(self):
         self.parser = Parser()
         self.parser.user_add()
 
+    # Получение массива данных пользователей
     def get(self):
         session = db_session.create_session()
         users = session.query(Users).all()
-        return jsonify([{'users': user.to_dict(
-            only=('id', 'type', 'nick_name', 'number', 'email', 'password'))} for user in users])
+        return jsonify([{'user': user.to_dict(
+            only=('id', 'type', 'nick_name', 'email', 'hashed_password'))} if user.type == 'Clients' else
+            {'user': user.to_dict(only=('id', 'type', 'nick_name', 'email', 'hashed_password',
+                                        'description', 'category', 'services', 'address', 'social', 'images',
+                                        'registrate'))}
+            for user in users])
 
+    # Создание пользователя
     def post(self):
         args = self.parser.parse_args()
         abort_if_type_invalid(args['type'])
+        abort_if_invalid_data(args['type'], args)
         session = db_session.create_session()
         if args['type'] == 'Masters':
             user = Masters(
-                nick_name=args['nick_name'],
-                name=args['name'],
-                surname=args['surname'],
-                number=args['number'],
-                email=args['email'],
-                password=args['password'],
-                description=args['description']
+                description=args['description'],
+                address=args['address'],
+                social=args['social'],
+                registrate=True
             )
-            c = session.query(Category).filter(Category.id == args['category']).first()
-            if c is None:
-                create_category()
-                c = session.query(Category).filter(Category.id == args['category']).first()
+            c = session.query(Category).filter(Category.name == args['category']).first()
             user.category.append(c)
         elif args['type'] == 'Clients':
-            user = Clients(
-                nick_name=args['nick_name'],
-                name=args['name'],
-                surname=args['surname'],
-                number=args['number'],
-                email=args['email'],
-                password=args['password'],
-                appointments_ids=args['appointments_ids']
-            )
+            user = Clients()
+        user.nick_name = args['nick_name']
+        user.email = args['email']
+        user.set_password(args['password'])
         session.add(user)
         session.commit()
         return jsonify({'id': user.id})
 
 
+def abort_if_invalid_data(type, args):
+    if type == 'Masters':
+        list_args = [args['description'], args['address'], args['social'], args['category']]
+        if not all(list_args):
+            abort(404, message=f"Invalid data for creating a user.")
+
+
+# Проверка валидности типа
 def abort_if_type_invalid(type):
     if type not in ['Masters', 'Clients']:
-        abort(404, message=f'Invalid type {type}: using "Masters" or "Clients"')
+        abort(404, message=f"Invalid type {type}: using 'Masters' or 'Clients'")
 
 
+# Проверка наличия пользователя
 def abort_if_users_not_found(user_id):
     session = db_session.create_session()
     user = session.query(Users).get(user_id)

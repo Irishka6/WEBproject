@@ -1,17 +1,21 @@
 import string
 from random import choice
-
-from flask import Flask, render_template, redirect, session, request
+from flask import Flask, render_template, redirect, send_file
 from flask_login import login_user, LoginManager, current_user, login_required, logout_user
 from flask_restful import abort, Api
 from data import db_session
 from api.users_resources import UsersResources, UsersListResources
+from api.services_resources import ServicesResources, ServicesListResources
+from data.category import Category, create_category
+from data.images import Images
 from data.users import Users, Masters, Clients
 from form.loginform import LoginForm
 from form.registr import RegisterForm
 from form.regmast import RegisterFormMaster
 from form.dobyslyg import DobyslForm
 from PIL import Image
+from io import BytesIO
+import asyncio
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'zxc_secret_key'
@@ -20,6 +24,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 api.add_resource(UsersListResources, '/api/v2/users')
 api.add_resource(UsersResources, '/api/v2/users/<int:user_id>')
+api.add_resource(ServicesListResources, '/api/v2/services')
+api.add_resource(ServicesResources, '/api/v2/services/<int:service_id>')
 app.secret_key = ''.join(choice(string.ascii_letters) for _ in range(30))
 
 
@@ -28,8 +34,8 @@ def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(Users).filter_by(id=user_id).first()
 
+
 @app.route('/logout')
-@login_required
 def logout():
     logout_user()
     return redirect("/")
@@ -37,6 +43,8 @@ def logout():
 
 def main():
     db_session.global_init('db/db.sqlite')
+    check_category()  # костыль
+    check_photo()
     app.run()
 
 
@@ -51,81 +59,128 @@ def login():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(Users).filter(Users.email == form.email.data).first()
-        if user.password == form.password.data:
-           login_user(user)
-           return redirect("/")
+        if user.check_password(form.password.data):
+            login_user(user)
+            return redirect("/")
+        return render_template('login.html', title='Авторизация', message='Неверный пароль', form=form)
     return render_template('login.html', title='Авторизация', form=form)
 
 
-@app.route("/masters", methods=['GET', 'POST'])
+@app.route("/masters")
 def masters():
-    return render_template("masters.html", name='')
+    db_sess = db_session.create_session()
+    users = db_sess.query(Masters).all()
+    ids_avatars = asyncio.run(main_get_avatar(users))
+    return render_template("masters.html", users=users, avatars=ids_avatars)
 
 
-@app.route("/registrate", methods=['GET', 'POST'])
-def reg():
+@app.route("/registration", methods=['GET', 'POST'])
+def registration():
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
-            return render_template("registrate.html", name='', title='Регистрация',
+            return render_template("registration.html", name='', title='Регистрация',
                                    form=form,
                                    message="Пароли не совпадают")
         db_sess = db_session.create_session()
-        if db_sess.query(Users).filter(Users.email == str(form.email.data)).first():
-            return render_template("registrate.html", name='', title='Регистрация',
+        if db_sess.query(Users).filter(Users.email == form.email.data).first():
+            return render_template("registration.html", name='', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
 
         if form.use.data == 'Мастер':
-            db_sess = db_session.create_session()
-            print(form.use.data)
-            user = Masters(nick_name=form.name.data,
-                         password=form.password.data,
-                         email=form.email.data)
-            db_sess.add(user)
-            db_sess.commit()
-            return redirect("/login")
+            user = Masters()
         else:
-            db_sess = db_session.create_session()
-            print(form.use.data)
-            user = Clients(nick_name=form.name.data,
-                           password=form.password.data,
-                           email=form.email.data)
-            db_sess.add(user)
+            user = Clients()
+        user.nick_name = form.name.data
+        user.email = form.email.data
+        user.set_password(form.password.data)
+        db_sess.add(user)
+        db_sess.commit()
+        login_user(user)
+        if form.use.data == 'Мастер':
+            return redirect(f"/registration_master/{user.id}")
+        return redirect('/')
+    return render_template("registration.html", form=form)
+
+
+@login_required
+@app.route("/registration_master/<int:master_id>", methods=["GET", "POST"])
+def registration_master(master_id):
+    db_sess = db_session.create_session()
+    master = db_sess.query(Masters).get(master_id)
+    if current_user.id == master.id and master.registrate is False:
+        form = RegisterFormMaster()
+        if form.validate_on_submit():
+            master.category.append(db_sess.query(Category).filter(Category.name==form.category.data).first())
+            master.address = form.address.data
+            master.social = form.telegram.data
+            master.description = form.description.data
+            master.registrate = True
+            f = form.photo.data
+            img = Images(type='avatar', master_id=master.id, data=f.read(), name=f.filename)
+            db_sess.add(img)
             db_sess.commit()
-            return redirect("/login")
-    return render_template("registrate.html", name='', form=form)
+            return redirect("/")
+        return render_template("registration_master.html", title='Регистрация мастера', form=form)
+    else:
+        abort(404)
 
 
-@app.route("/mast/<int:id>", methods=["GET", "POST"])
-def move_forward(id):
-    form = RegisterFormMaster()
-    # здесь добавить вставку уже имеющихся значенй взятых из БД по айди мастера
-    if form.validate_on_submit():
-        # здесь изменить в БД нововведенные данные форма называется regmast.py in form
-        return redirect("/login")
-    return render_template("regmas.html", name='', form=form)
+@app.route("/page_master/<int:user_id>")  # надо добавить /int:id как только будешь связывать с БД мастеров
+def page_master(user_id):
+    if current_user.is_authenticated:
+        db_sess = db_session.create_session()
+        user = db_sess.query(Users).get(user_id)
+        img = list(filter(lambda x: x.type == 'avatar', user.images))
+        if not img:
+            img = db_sess.query(Images).filter(Images.type == 'default').first()
+        else:
+            img = img[0]
+        im = Image.open(BytesIO(img.data))
+        pi = im.load()
+        r, g, b, total = 0, 0, 0, 0
+        x, y = im.size
+        for i in range(x):
+            for j in range(y):
+                total += 1
+                r += pi[i, j][0]
+                g += pi[i, j][1]
+                b += pi[i, j][2]
+        rgb = str((r // total, g // total, b // total))
+        return render_template("page_master.html", photo=rgb, master=user, avatar=img)
+    return redirect('/')
 
-@app.route("/stranichca") # надо добавить /int:id как только будешь связывать с БД мастеров
-def stranichka():
-    im = Image.open('static/img/par.jpg')# загружается аватарка сохраненая d БД
-    pi = im.load()
-    r, g, b, total = 0, 0, 0, 0
-    x, y = im.size
-    for i in range(x):
-        for j in range(y):
-            total += 1
-            r += pi[i, j][0]
-            g += pi[i, j][1]
-            b += pi[i, j][2]
-    rgb = str((r // total, g // total, b // total))
-    # поле аватар заменить путем к фото которое сохраняется в папку при просмотреа после удаляеется
-    # тут надо достать все данные по мастеру прям все и загрузить в render_template
-    return render_template("stranighka.html", name='', foto=rgb, prais='Маникюр-650', sety='сылки', avatar="static/img/par.jpg", ysluga=[["Маникюр", "1600", "1час 30 мин"], ["Маникюр", "1600", "1час 30 мин"]])
+
+async def get_avatar(user):
+    avatar = list(filter(lambda x: x.type == 'avatar', user.images))
+    if not avatar:
+        db_sess = db_session.create_session()
+        avatar = db_sess.query(Images).filter(Images.type == 'default').first()
+    else:
+        avatar = avatar[0]
+    return user.id, avatar.id
+
+
+async def main_get_avatar(users):
+    tasks = []
+    for user in users:
+        tasks.append(asyncio.create_task(get_avatar(user)))
+    a = await asyncio.gather(*tasks)
+    return {m: i for m, i in a}
+
+
+@app.route('/image/<int:image_id>')
+def get_image(image_id):
+    db_sess = db_session.create_session()
+    image = db_sess.query(Images).get(image_id)
+    return send_file(BytesIO(image.data), mimetype='image/jpeg')
+
 
 @app.route("/zapis")
 def zapis():
     pass
+
 
 @app.route("/dobysl")
 def dobysl():
@@ -134,6 +189,26 @@ def dobysl():
         #  тут нужно сохранить то что введенно в форме в БД
         return redirect("/stranichca")
     return render_template("dobysl.html", form=form)
+
+
+# костыль
+def check_category():
+    sess = db_session.create_session()
+    categories = sess.query(Category).all()
+    if len(categories) == 0:
+        create_category()
+
+
+def check_photo():
+    sess = db_session.create_session()
+    photos = sess.query(Images).all()
+    if len(list(filter(lambda x: x.type == 'default', photos))) == 0:
+        with open('default.jpg', 'rb') as f:
+            d = f.read()
+        img = Images(name='default.jpg', data=d, type='default')
+        sess.add(img)
+        sess.commit()
+
 
 if __name__ == '__main__':
     main()

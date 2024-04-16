@@ -3,40 +3,69 @@ from sqlalchemy import orm
 from sqlalchemy_serializer import SerializerMixin
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from data.category import Category
+from data.images import Images
+from data.services import Services
 
 from data.db_session import SqlAlchemyBase
 
 
+# Основная таблица пользователя
+# Тут будут храниться основные данные о пользователе (ник, почта, хэш пароля, тип пользователя)
 class Users(SqlAlchemyBase, UserMixin, SerializerMixin):
-    __tablename__ = 'Users'
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    __tablename__ = 'Users'  # Имя таблицы
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)  # id пользователя
 
-    type = sa.Column(sa.String(32), nullable=False)
-    nick_name = sa.Column(sa.String(40), nullable=False)
-    password = sa.Column(sa.String(30), nullable=False)
-    email = sa.Column(sa.String, unique=True, nullable=False)
-    __mapper_args__ = {'polymorphic_on': type}
+    type = sa.Column(sa.String(32), nullable=False)  # тип пользователя, может быть либо Masters, либо Clients/
+    nick_name = sa.Column(sa.String(40), nullable=False)  # ник пользователя
+    hashed_password = sa.Column(sa.String(30), nullable=False)  # хэш пароля пользователя
+    email = sa.Column(sa.String, unique=True, nullable=False)  # почта пользователя
+    __mapper_args__ = {'polymorphic_on': type}  # для корректного наследования классов
 
+    # Метод для удобного вывода
     def __repr__(self):
-        return f'<{self.type}> {self.id} {self.nick_name}'
+        return f'<{self.type}> {self.id} {self.nick_name} {self.email} {self.hashed_password}'
+
+    # Метод для установки пароля
+    def set_password(self, password):
+        self.hashed_password = generate_password_hash(password)
+
+    # Метод для проверки того, что переданный пароль (password) идентичен хэшированному паролю
+    def check_password(self, password):
+        return check_password_hash(self.hashed_password, password)
 
 
-
+# Таблица Мастеров
 class Masters(Users):
-    __tablename__ = 'Masters'
-    id = sa.Column(None, sa.ForeignKey('Users.id'), primary_key=True)
-    description = sa.Column(sa.String(500))
+    # Сериализация Категорий для корректного отображения в API
+    serialize_types = (
+        (Category, lambda x: x.name),
+        (str, lambda x: x),
+        (Services, lambda x: {"id": x.id, "name": x.name, "description": x.description, "price": x.price}),
+        (dict, lambda x: x),
+        (Images, lambda x: {'id': x.id, 'master_id': x.master_id, 'name': x.name}),
+        (str, lambda x: x)
+    )
+
+    __tablename__ = 'Masters'  # Имя таблицы
+    id = sa.Column(None, sa.ForeignKey('Users.id'), primary_key=True)  # id Мастера
+    description = sa.Column(sa.String(500))  # описание Мастера
+    address = sa.Column(sa.String(150))  # Адрес Мастера
+    social = sa.Column(sa.String)
+    registrate = sa.Column(sa.Boolean, default=False)
     category = orm.relationship("Category",
                                 secondary="Category_of_Masters",
-                                backref="Masters")
-    services = orm.relationship('Services', back_populates='Masters')
-    __mapper_args__ = {'polymorphic_identity': 'Masters'}
+                                backref="Masters")  # Категории Мастера
+    services = orm.relationship('Services', back_populates='master')  # Услуги Мастера
+    images = orm.relationship('Images', back_populates='master')
+    __mapper_args__ = {'polymorphic_identity': 'Masters'}  # для наследования от класса Users
 
 
+# Таблица Клиентов
 class Clients(Users):
-    __tablename__ = 'Clients'
-    id = sa.Column(None, sa.ForeignKey('Users.id'), primary_key=True)
+    __tablename__ = 'Clients'  # Имя таблицы
+    id = sa.Column(None, sa.ForeignKey('Users.id'), primary_key=True)  # id Клиента
     appointments_ids = orm.relationship('Services',
                                         secondary='Appointment',
-                                        backref='Clients')
-    __mapper_args__ = {'polymorphic_identity': 'Clients'}
+                                        backref='Clients')  # Записи на приём к Мастерам
+    __mapper_args__ = {'polymorphic_identity': 'Clients'}  # для наследования от класса Users

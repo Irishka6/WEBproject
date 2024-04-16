@@ -1,7 +1,7 @@
 import sqlalchemy
 from data.db_session import SqlAlchemyBase, create_session
 
-
+# Вспомогательная таблица для Категорий Мастеров
 association_table = sqlalchemy.Table(
     'Category_of_Masters',
     SqlAlchemyBase.metadata,
@@ -12,16 +12,18 @@ association_table = sqlalchemy.Table(
 )
 
 
+# Таблица Категорий
 class Category(SqlAlchemyBase):
-    __tablename__ = 'Category'
+    __tablename__ = 'Category'  # Имя таблицы
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True,
-                           autoincrement=True)
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+                           autoincrement=True)  # id
+    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)  # имя Категории
 
 
+# костыль
 def create_category():
     s = create_session()
-    categories = [Category(name='hairdresser'), Category(name='manicure'), Category(name='makeup')]
+    categories = [Category(name='Мастер маникюра(педикюра)'), Category(name='Парикмахер'), Category(name='Визажист')]
     for c in categories:
         s.add(c)
     s.commit()

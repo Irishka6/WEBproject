@@ -22,7 +22,7 @@
           </button>
           <ul class="dropdown-menu">
               {% if current_user.type == "Masters" %}
-                <li><a class="dropdown-item" href="/stranichca">Профиль</a></li>
+                <li><a class="dropdown-item" href="/page_master/{{ current_user.id }}">Профиль</a></li>
               {% else %}
                 <li><a class="dropdown-item" href="/zapis">Мои записи</a></li>
               {% endif %}
@@ -32,7 +32,7 @@
 
         {% else %}
             <p>
-                <a class="btn" href="/registrate" style="background-color:#b5aaa7; color:#ffffff">Зарегистрироваться</a>
+                <a class="btn" href="/registration" style="background-color:#b5aaa7; color:#ffffff">Зарегистрироваться</a>
                 <a class="btn" href="/login" style="background-color:#85736e; color:#ffffff">Войти</a>
             </p>
         {% endif %}

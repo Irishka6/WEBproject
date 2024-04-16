@@ -59,7 +59,7 @@
                           </p
                           <p>
                                 {{ form.use.label }}<br>
-                                {{ form.use(class="form-control") }}<br>
+                                {{ form.use(class="form-control", id="combo") }}<br>
                                 {% for error in form.use.errors %}
                                     <div class="alert alert-danger" role="alert">
                                         {{ error }}

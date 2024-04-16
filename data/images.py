@@ -1,0 +1,14 @@
+import sqlalchemy as sa
+from sqlalchemy import ForeignKey, orm
+from data.db_session import SqlAlchemyBase
+
+
+class Images(SqlAlchemyBase):
+    __tablename__ = 'Images'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    type = sa.Column(sa.String)
+    master_id = sa.Column(sa.Integer, ForeignKey('Masters.id'))
+    data = sa.Column(sa.LargeBinary)
+    name = sa.Column(sa.String)
+    master = orm.relationship('Masters')

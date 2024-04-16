@@ -13,6 +13,7 @@
                   <div class="row">
                     <div class="col-md-6 mb-4">
                       <form action="" method="post" style="width: 500px">
+                          {{ form.hidden_tag() }}
                             <p>
                                 {{ form.name.label }}<br>
                                 {{ form.name(class="form-control") }}<br>

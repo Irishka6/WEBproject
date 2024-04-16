@@ -19,6 +19,8 @@ class Category(SqlAlchemyBase):
                            autoincrement=True)  # id
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)  # имя Категории
 
+    def __repr__(self):
+        return f'{self.name}'
 
 # костыль
 def create_category():

@@ -18,7 +18,7 @@ class Services(SqlAlchemyBase, SerializerMixin):
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)  # id
     master_id = sa.Column(sa.Integer, sa.ForeignKey('Masters.id'))  # id Мастера
     name = sa.Column(sa.String)  # Название Услуги
-    description = sa.Column(sa.String)  # Описание Услуги
+    description = sa.Column(sa.String)  # Time
     price = sa.Column(sa.Integer)  # Цена
     master = orm.relationship('Masters')
 

@@ -6,9 +6,10 @@ from flask_restful import abort, Api
 from data import db_session
 from api.users_resources import UsersResources, UsersListResources
 from api.services_resources import ServicesResources, ServicesListResources
-from data.category import Category, create_category
+from data.category import Category, create_category, association_table
 from data.images import Images
 from data.users import Users, Masters, Clients
+from data.services import Services
 from form.loginform import LoginForm
 from form.registr import RegisterForm
 from form.regmast import RegisterFormMaster
@@ -66,12 +67,16 @@ def login():
     return render_template('login.html', title='Авторизация', form=form)
 
 
-@app.route("/masters")
-def masters():
+@app.route("/masters/<typ>")
+def masters(typ):
     db_sess = db_session.create_session()
     users = db_sess.query(Masters).all()
-    ids_avatars = asyncio.run(main_get_avatar(users))
-    return render_template("masters.html", users=users, avatars=ids_avatars)
+    user = []
+    for i in users:
+        if i.category.__repr__()[1:len(i.category.__repr__()) - 1] == typ:
+            user.append(i)
+    ids_avatars = asyncio.run(main_get_avatar(user))
+    return render_template("masters.html", users=user, avatars=ids_avatars)
 
 
 @app.route("/registration", methods=['GET', 'POST'])
@@ -182,13 +187,27 @@ def zapis():
     pass
 
 
-@app.route("/dobysl")
-def dobysl():
+@app.route("/addingservice/<int:id>", methods=["GET", "POST"])
+def adding_service(id):
     form = DobyslForm()
     if form.validate_on_submit():
-        #  тут нужно сохранить то что введенно в форме в БД
-        return redirect("/stranichca")
+        db_sess = db_session.create_session()
+        servise = Services(master_id=id,
+                           name=form.name.data,
+                           description=str(form.time.data),
+                           price=form.price.data)
+        db_sess.add(servise)
+        db_sess.commit()
+        return redirect(f"/page_master/{id}")
     return render_template("dobysl.html", form=form)
+
+@app.route("/deleteservice/<int:id>/<int:master_id>", methods=["GET", "POST"])
+def delete_service(id, master_id):
+    db_sess = db_session.create_session()
+    servise = db_sess.query(Services).filter(Services.id == id).first()
+    db_sess.delete(servise)
+    db_sess.commit()
+    return redirect(f"/page_master/{master_id}")
 
 
 # костыль

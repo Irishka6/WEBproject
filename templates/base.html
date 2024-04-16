@@ -22,7 +22,7 @@
           </button>
           <ul class="dropdown-menu">
               {% if current_user.type == "Masters" %}
-                <li><a class="dropdown-item" href="/stranichca">Профиль</a></li>
+                <li><a class="dropdown-item" href="/page_master/{{ current_user.id }}">Профиль</a></li>
               {% else %}
                 <li><a class="dropdown-item" href="/zapis">Мои записи</a></li>
               {% endif %}

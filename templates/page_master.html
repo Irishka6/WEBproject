@@ -21,9 +21,11 @@
                             <p class="small mb-4" style="font-size: 1.75rem"> <i class="fa fa-map-marker mr-2"></i>{{master.social}}</p>
                                 <div class="container" >
                                     <div class="row">
+                                        {% if current_user.id == master.id %}
                                         <div class="col">
                                             <a href="/mast" class="btn btn-dark btn-sm btn-block">Изменить профиль</a>
                                         </div>
+                                        {% endif %}
                                         <div class="col">
                                             <p>
                                                 <button class="btn btn-dark btn-sm btn-block"  type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
@@ -31,9 +33,11 @@
                                                 </button>
                                             </p>
                                         </div>
+                                        {% if current_user.id == master.id %}
                                         <div class="col">
-                                            <a href="/dobysl" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
+                                            <a href="/addingservice/{{master.id}}" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                         </div>
@@ -57,7 +61,9 @@
                                                 <td>{{service.name}}</td>
                                                 <td>{{service.price}}</td>
                                                 <td>{{service.description}}</td>
-                                                <td><a href="/del" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
+                                                {% if current_user.id == master.id %}
+                                                <td><a href="/deleteservice/{{service.id}}/{{master.id}}" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
+                                                {% endif %}
                                             </tr>
                                             {% endfor %}
                                             </tbody>

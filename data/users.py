@@ -58,6 +58,7 @@ class Masters(Users):
                                 backref="Masters")  # Категории Мастера
     services = orm.relationship('Services', back_populates='master')  # Услуги Мастера
     images = orm.relationship('Images', back_populates='master')
+    appointments = orm.relationship('Appointments', back_populates='master')
     __mapper_args__ = {'polymorphic_identity': 'Masters'}  # для наследования от класса Users
 
 
@@ -65,7 +66,5 @@ class Masters(Users):
 class Clients(Users):
     __tablename__ = 'Clients'  # Имя таблицы
     id = sa.Column(None, sa.ForeignKey('Users.id'), primary_key=True)  # id Клиента
-    appointments_ids = orm.relationship('Services',
-                                        secondary='Appointment',
-                                        backref='Clients')  # Записи на приём к Мастерам
+    appointments = orm.relationship('Appointments', back_populates='client')  # Записи на приём к Мастерам
     __mapper_args__ = {'polymorphic_identity': 'Clients'}  # для наследования от класса Users

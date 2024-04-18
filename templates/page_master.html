@@ -35,7 +35,7 @@
                                         </div>
                                         {% if current_user.id == master.id %}
                                         <div class="col">
-                                            <a href="/addingservice/{{master.id}}" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
+                                            <a href="/adding_service/{{master.id}}" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
                                         </div>
                                         {% endif %}
                                     </div>
@@ -62,7 +62,7 @@
                                                 <td>{{service.price}}</td>
                                                 <td>{{service.description}}</td>
                                                 {% if current_user.id == master.id %}
-                                                <td><a href="/deleteservice/{{service.id}}/{{master.id}}" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
+                                                <td><a href="/delete_service/{{service.id}}/{{master.id}}" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
                                                 {% endif %}
                                             </tr>
                                             {% endfor %}

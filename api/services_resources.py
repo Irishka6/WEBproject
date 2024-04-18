@@ -2,8 +2,7 @@ from flask import jsonify
 from flask_restful import Resource, abort
 from api.parser import Parser
 from data import db_session
-from data.users import Users, Masters, Clients
-from data.category import Category
+from data.users import Users
 from data.services import Services
 
 
@@ -80,4 +79,4 @@ def abort_if_service_not_found(service_id):
     session = db_session.create_session()
     service = session.query(Services).get(service_id)
     if not service:
-        abort(404, message=f"Users {service_id} not found")
+        abort(404, message=f"Service {service_id} not found")

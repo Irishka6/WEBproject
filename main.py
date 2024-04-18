@@ -6,7 +6,7 @@ from flask_restful import abort, Api
 from data import db_session
 from api.users_resources import UsersResources, UsersListResources
 from api.services_resources import ServicesResources, ServicesListResources
-from data.category import Category, create_category, association_table
+from data.category import Category, create_category
 from data.images import Images
 from data.users import Users, Masters, Clients
 from data.services import Services
@@ -75,8 +75,8 @@ def masters(typ):
     for i in users:
         if i.category.__repr__()[1:len(i.category.__repr__()) - 1] == typ:
             user.append(i)
-    ids_avatars = asyncio.run(main_get_avatar(user))
-    return render_template("masters.html", users=user, avatars=ids_avatars)
+    ids_avatars = asyncio.run(main_get_avatar(users))
+    return render_template("masters.html", users=users, avatars=ids_avatars)
 
 
 @app.route("/registration", methods=['GET', 'POST'])
@@ -132,7 +132,7 @@ def registration_master(master_id):
         abort(404)
 
 
-@app.route("/page_master/<int:user_id>")  # надо добавить /int:id как только будешь связывать с БД мастеров
+@app.route("/page_master/<int:user_id>")
 def page_master(user_id):
     if current_user.is_authenticated:
         db_sess = db_session.create_session()
@@ -187,25 +187,26 @@ def zapis():
     pass
 
 
-@app.route("/addingservice/<int:id>", methods=["GET", "POST"])
+@app.route("/adding_service/<int:id>", methods=["GET", "POST"])
 def adding_service(id):
     form = DobyslForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        servise = Services(master_id=id,
+        service = Services(master_id=id,
                            name=form.name.data,
-                           description=str(form.time.data),
+                           duration=form.time.data,
                            price=form.price.data)
-        db_sess.add(servise)
+        db_sess.add(service)
         db_sess.commit()
         return redirect(f"/page_master/{id}")
     return render_template("dobysl.html", form=form)
 
-@app.route("/deleteservice/<int:id>/<int:master_id>", methods=["GET", "POST"])
+
+@app.route("/delete_service/<int:id>/<int:master_id>", methods=["GET", "POST"])
 def delete_service(id, master_id):
     db_sess = db_session.create_session()
-    servise = db_sess.query(Services).filter(Services.id == id).first()
-    db_sess.delete(servise)
+    service = db_sess.query(Services).filter(Services.id == id).first()
+    db_sess.delete(service)
     db_sess.commit()
     return redirect(f"/page_master/{master_id}")
 

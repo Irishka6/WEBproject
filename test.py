@@ -11,17 +11,12 @@ from requests import get, post, delete
 #     'appointments_ids': ''
 # }).json())
 
-# print(post('http://localhost:5000/api/v2/users', json={
-#     'nick_name': 'qwerty',
-#     'name': 'qwerty',
-#     'surname': 'qwerty',
-#     'number': '+79000000000',
-#     'email': 'zxcc@gmail.com',
-#     'password': '123',
-#     'type': 'Masters',
-#     'description': 'zxc',
-#     'category': 1
-# }).json())
+print(post('http://localhost:5000/api/v2/users', json={
+    "type": "Clients",
+    "password": "zxc",
+    "email": "zxc1@g.com",
+    "nick_name": "zxc"
+}).json())
 
 print(delete('http://localhost:5000/api/v2/users/1').json())
 

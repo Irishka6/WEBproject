@@ -132,6 +132,7 @@ def registration_master(master_id):
     elif current_user.id == master.id and master.registrate is True:
         form = RegisterFormMaster()
         if form.validate_on_submit():
+            master.category[0] = db_sess.query(Category).filter(Category.name==form.category.data).first()
             master.address = form.address.data
             master.social = form.telegram.data
             master.description = form.description.data

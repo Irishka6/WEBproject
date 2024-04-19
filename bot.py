@@ -60,6 +60,7 @@ def mess(message):
                          parse_mode="html", reply_markup=keyboard())
     if message.text == 'Выбрать мастера':
         master_id(chat_id)
+        bot.register_next_step_handler(message, adding_zapis)
 
 
 def master_id(mass):

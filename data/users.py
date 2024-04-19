@@ -62,6 +62,10 @@ class Masters(Users):
     __mapper_args__ = {'polymorphic_identity': 'Masters'}  # для наследования от класса Users
 
 
+    def __repr__(self):
+        return f'{self.id} - {self.nick_name} {self.category}'
+
+
 # Таблица Клиентов
 class Clients(Users):
     __tablename__ = 'Clients'  # Имя таблицы

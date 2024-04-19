@@ -7,7 +7,7 @@ from data.users import Users, Masters, Clients
 from data.services import Services
 
 bot = tl.TeleBot("6778264892:AAFj1C5Sa_7OYViFp_71oiENscNNxEqOijw")
-email = ''
+user = ''
 db_session.global_init('db/db.sqlite')
 
 
@@ -16,55 +16,70 @@ def get_text_messages(message):
     bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
     bot.register_next_step_handler(message, emaile)
 
-@bot.message_handler(content_types=["text"])
-def send_anytext(mass):
-    chat_id = mass.chat.id
-
-
 
 def emaile(message):
+    global user
     email = message.text.strip()
     if email == '/start':
         bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
         bot.register_next_step_handler(message, emaile)
     db_sess = db_session.create_session()
     if not ('@' in email and ('.com' in email or '.ru' in email)):
-        bot.send_message(message.chat.id, f"<n>Попробуй ещё раз, ты ввел не почту</n>",
+        bot.send_message(message.chat.id, f"Попробуй ещё раз, ты ввел не почту",
                          parse_mode="html")
         bot.register_next_step_handler(message, emaile)
-    elif db_sess.query(Users).filter(Users.email == email).first():
-        user = db_sess.query(Users).filter(Users.email == email).first()
-        if user.type == 'Masters':
-            bot.send_message(message.chat.id, f"Введи число,которое ты запомнил на странице сайта {email}",
-                            parse_mode="html", reply_markup=keyboard_master())
-        else:
-            bot.send_message(message.chat.id, f"Введи число,которое ты запомнил на странице сайта {email}",
-                             parse_mode="html", reply_markup=keyboard())
     else:
-        bot.send_message(message.chat.id, f"Ты не зарегестрирован на сайте",
-                         parse_mode="html")
+        if db_sess.query(Users).filter(Users.email == email).first():
+            user = db_sess.query(Users).filter(Users.email == email).first()
+            if user.type == 'Masters':
+                bot.send_message(message.chat.id, f"{user.nick_name}, что вы хотели бы узнать",
+                                parse_mode="html", reply_markup=keyboard_master())
+            else:
+                bot.send_message(message.chat.id, f"{user.nick_name}, что вы хотели бы узнать",
+                                 parse_mode="html", reply_markup=keyboard())
+        else:
+            bot.send_message(message.chat.id, f"Ты не зарегестрирован на сайте",
+                             parse_mode="html")
+            bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
+            bot.register_next_step_handler(message, emaile)
+    if email == 'Записаться':
+        bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+                         parse_mode="html", reply_markup=keyboard())
+    if email == 'Выбрать мастера':
+        bot.register_next_step_handler(message, master_id)
+
+
+@bot.message_handler(content_types=["text"])
+def mess(message):
+    chat_id = message.chat.id
+    if message.text == '/start':
         bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
         bot.register_next_step_handler(message, emaile)
+    if message.text == 'Записаться':
+        bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+                         parse_mode="html", reply_markup=keyboard())
+    if message.text == 'Выбрать мастера':
+        master_id(chat_id)
 
 
-def master_id(message):
-    master_id_db = int(message.text.strip())
+def master_id(mass):
     db_sess = db_session.create_session()
-    entry = db_sess.query(Appointments).filter(Appointments.master_id == master_id_db)
-    print(', '.join([repr(i) for i in entry]))
-    bot.send_message(message.chat.id, ', '.join([repr(i) for i in entry]))
+    masters = db_sess.query(Masters).all()
+    print('\n'.join([repr(i) for i in masters]))
+    bot.send_message(mass, '\n'.join([repr(i) for i in masters]))
 
 
-@bot.message_handler(commands=["Zapic"])
-def adding_zapis():
+def adding_zapis(mass):
     pass
+
 
 def keyboard():
     markup = tl.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     btn1 = tl.types.KeyboardButton('Записаться')
     btn2 = tl.types.KeyboardButton('Мои записи')
+    btn4 = tl.types.KeyboardButton('Выбрать мастера')
     btn3 = tl.types.KeyboardButton('/start')
-    markup.add(btn1, btn2, btn3)
+    markup.add(btn1, btn2, btn3, btn4)
     return markup
 
 def keyboard_master():

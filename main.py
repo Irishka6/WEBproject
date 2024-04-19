@@ -73,10 +73,11 @@ def masters(typ):
     users = db_sess.query(Masters).all()
     user = []
     for i in users:
+        print(i.category.__repr__()[1:len(i.category.__repr__()) - 1], typ)
         if i.category.__repr__()[1:len(i.category.__repr__()) - 1] == typ:
             user.append(i)
     ids_avatars = asyncio.run(main_get_avatar(users))
-    return render_template("masters.html", users=users, avatars=ids_avatars)
+    return render_template("masters.html", users=user, avatars=ids_avatars)
 
 
 @app.route("/registration", methods=['GET', 'POST'])
@@ -128,6 +129,20 @@ def registration_master(master_id):
             db_sess.commit()
             return redirect("/")
         return render_template("registration_master.html", title='Регистрация мастера', form=form)
+    elif current_user.id == master.id and master.registrate is True:
+        form = RegisterFormMaster()
+        if form.validate_on_submit():
+            master.address = form.address.data
+            master.social = form.telegram.data
+            master.description = form.description.data
+            db_sess.commit()
+            return redirect(f"/page_master/{master_id}")
+        else:
+            form.category.data = master.category
+            form.address.data = master.address
+            form.telegram.data = master.social
+            form.description.data = master.description
+        return render_template("registration_master.html", title='Редактирование профиля мастера', form=form, master=master)
     else:
         abort(404)
 

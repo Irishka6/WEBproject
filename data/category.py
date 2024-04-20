@@ -22,6 +22,7 @@ class Category(SqlAlchemyBase):
     def __repr__(self):
         return f'{self.name}'
 
+
 # костыль
 def create_category():
     s = create_session()

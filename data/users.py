@@ -41,7 +41,7 @@ class Masters(Users):
     serialize_types = (
         (Category, lambda x: x.name),
         (str, lambda x: x),
-        (Services, lambda x: {"id": x.id, "name": x.name, "description": x.description, "price": x.price}),
+        (Services, lambda x: {"id": x.id, "name": x.name, "duration": str(x.duration), "price": x.price}),
         (dict, lambda x: x),
         (Images, lambda x: {'id': x.id, 'master_id': x.master_id, 'name': x.name}),
         (str, lambda x: x)

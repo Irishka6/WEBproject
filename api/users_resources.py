@@ -1,8 +1,7 @@
 from flask import jsonify
 from flask_restful import Resource, abort
-from api.parser import Parser
+from flask_restful.reqparse import RequestParser
 from data import db_session
-from data.images import Images
 from data.users import Users, Masters, Clients
 from data.category import Category
 
@@ -10,8 +9,14 @@ from data.category import Category
 # Класс для просмотра, удаления и изменения пользователя с помощью API
 class UsersResources(Resource):
     def __init__(self):
-        self.parser = Parser()  # Инициализация парсера для изменения пользователя
-        self.parser.user_update()
+        self.parser = RequestParser()  # Инициализация парсера для изменения пользователя
+        self.parser.add_argument('nick_name', required=False, type=str)
+        self.parser.add_argument('email', required=False, type=str)
+        self.parser.add_argument('password', required=False, type=str)
+        self.parser.add_argument('description', required=False, type=str)
+        self.parser.add_argument('category', required=False, type=str)
+        self.parser.add_argument('address', required=False, type=str)
+        self.parser.add_argument('social', required=False, type=str)
 
     # Получение данных пользователя по id
     def get(self, user_id):
@@ -60,8 +65,15 @@ class UsersResources(Resource):
 # Класс для получения пользователя в виде списка и добавления Услуг с помощью API
 class UsersListResources(Resource):
     def __init__(self):
-        self.parser = Parser()
-        self.parser.user_add()
+        self.parser = RequestParser()
+        self.parser.add_argument('nick_name', required=True, type=str)
+        self.parser.add_argument('email', required=True, type=str)
+        self.parser.add_argument('password', required=True, type=str)
+        self.parser.add_argument('type', required=True, type=str)
+        self.parser.add_argument('description', required=False, type=str)
+        self.parser.add_argument('category', required=False, type=str)
+        self.parser.add_argument('address', required=False, type=str)
+        self.parser.add_argument('social', required=False, type=str)
 
     # Получение массива данных пользователей
     def get(self):

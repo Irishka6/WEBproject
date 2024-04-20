@@ -5,7 +5,7 @@ from data.db_session import SqlAlchemyBase, create_session
 association_table = sqlalchemy.Table(
     'Category_of_Masters',
     SqlAlchemyBase.metadata,
-    sqlalchemy.Column('Masters', sqlalchemy.Integer,
+    sqlalchemy.Column('Master', sqlalchemy.Integer,
                       sqlalchemy.ForeignKey('Masters.id')),
     sqlalchemy.Column('Category', sqlalchemy.Integer,
                       sqlalchemy.ForeignKey('Category.id'))

@@ -33,7 +33,7 @@ def emaile(message):
             user = db_sess.query(Users).filter(Users.email == email).first()
             if user.type == 'Masters':
                 bot.send_message(message.chat.id, f"{user.nick_name}, что вы хотели бы узнать",
-                                parse_mode="html", reply_markup=keyboard_master())
+                                 parse_mode="html", reply_markup=keyboard_master())
             else:
                 bot.send_message(message.chat.id, f"{user.nick_name}, что вы хотели бы узнать",
                                  parse_mode="html", reply_markup=keyboard())
@@ -43,7 +43,8 @@ def emaile(message):
             bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
             bot.register_next_step_handler(message, emaile)
     if email == 'Записаться':
-        bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+        bot.send_message(message.chat.id,
+                         f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
                          parse_mode="html", reply_markup=keyboard())
     if email == 'Выбрать мастера':
         bot.register_next_step_handler(message, master_id)
@@ -56,7 +57,8 @@ def mess(message):
         bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
         bot.register_next_step_handler(message, emaile)
     if message.text == 'Записаться':
-        bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+        bot.send_message(message.chat.id,
+                         f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
                          parse_mode="html", reply_markup=keyboard())
     if message.text == 'Выбрать мастера':
         master_id(chat_id)
@@ -83,6 +85,7 @@ def keyboard():
     markup.add(btn1, btn2, btn3, btn4)
     return markup
 
+
 def keyboard_master():
     markup = tl.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     btn1 = tl.types.KeyboardButton('Записи на сегодня')
@@ -90,6 +93,7 @@ def keyboard_master():
     btn3 = tl.types.KeyboardButton(text='/start')
     markup.add(btn1, btn2, btn3)
     return markup
+
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)

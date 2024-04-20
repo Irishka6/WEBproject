@@ -57,7 +57,6 @@ class UsersResources(Resource):
             if args['category'] is not None:
                 c = session.query(Category).filter(Category.name==args['category']).first()
                 user.category[0] = c
-        # elif user.type == 'Clients':
         session.commit()
         return jsonify({'success': 'OK'})
 
@@ -108,20 +107,20 @@ class UsersListResources(Resource):
         user.set_password(args['password'])
         session.add(user)
         session.commit()
-        return jsonify({'id': user.id})
+        return jsonify({'User ID': user.id})
 
 
 def abort_if_invalid_data(type, args):
     if type == 'Masters':
         list_args = [args['description'], args['address'], args['social'], args['category']]
         if not all(list_args):
-            abort(404, message=f"Invalid data for creating a user.")
+            abort(400, message=f"Invalid data for creating a user.")
 
 
 # Проверка валидности типа
 def abort_if_type_invalid(type):
     if type not in ['Masters', 'Clients']:
-        abort(404, message=f"Invalid type {type}: using 'Masters' or 'Clients'")
+        abort(400, message=f"Invalid type {type}: using 'Masters' or 'Clients'")
 
 
 # Проверка наличия пользователя

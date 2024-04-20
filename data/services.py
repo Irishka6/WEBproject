@@ -12,7 +12,6 @@ class Services(SqlAlchemyBase, SerializerMixin):
     name = sa.Column(sa.String)  # Название Услуги
     duration = sa.Column(sa.Time)  # Время
     price = sa.Column(sa.Integer)  # Цена
-    appointments = orm.relationship('Appointments', back_populates='service')
     master = orm.relationship('Masters')
 
     # Метод для удобного вывода

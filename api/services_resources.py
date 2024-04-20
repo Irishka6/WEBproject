@@ -67,7 +67,7 @@ class ServicesListResources(Resource):
         session = db_session.create_session()
         user = session.query(Users).get(args['master_id'])
         if user.type != 'Masters':
-            abort(404, message=f"The ID: {args['master_id']} does not belong to the master")
+            abort(400, message=f"The ID: {args['master_id']} does not belong to the master")
         service = Services(
             name=args['name'],
             master_id=args['master_id'],
@@ -76,7 +76,7 @@ class ServicesListResources(Resource):
         )
         session.add(service)
         session.commit()
-        return jsonify({'id': service.id})
+        return jsonify({'Service ID': service.id})
 
 
 # Проверка наличия Услуги

@@ -5,10 +5,12 @@ from data.category import Category, create_category
 from data.images import Images
 from data.users import Users, Masters, Clients
 from data.services import Services
+import datetime
 
 bot = tl.TeleBot("6778264892:AAFj1C5Sa_7OYViFp_71oiENscNNxEqOijw")
 user = ''
 db_session.global_init('db/db.sqlite')
+date_time = []
 
 
 @bot.message_handler(commands=['start'])
@@ -71,7 +73,54 @@ def master_id(mass):
 
 
 def adding_zapis(mass):
-    pass
+    global date_time
+    db_sess = db_session.create_session()
+    entry = db_sess.query(Appointments).filter(Appointments.master_id == int(mass.text) and datetime.date.today() <= Appointments.date and datetime.datetime.time() <= Appointments.time)
+    date_time.append(int(mass.text))
+    print('\n'.join([repr(i) for i in entry]))
+    bot.send_message(mass.chat.id, 'Введите год на которое хотите записаться')
+    bot.register_next_step_handler(mass, year)
+    # servis = db_sess.query(Services).filter(Services.master_id == int(mass.id))
+    # bot.send_message(mass.chat.id, f'\n'.join([repr(i) for i in servis]))
+
+
+def servis(mass):
+    global date_time, user
+    db_sess = db_session.create_session()
+    entry = Appointments()
+    entry.master_id = date_time[0]
+    entry.client_id = user.id
+    entry.service_id = int(mass.text)
+    entry.date = datetime.date(date_time[1], date_time[2], date_time[3])
+    entry.time = datetime.time(*[int(i) for i in date_time[4].split(':')])
+    db_sess.add(entry)
+    db_sess.commit()
+
+
+def date(mass):
+    global date_time
+    date_time.append(int(mass.text))
+    bot.send_message(mass.chat.id, 'Введите время на которое хотите записаться в формате 12:10')
+    bot.register_next_step_handler(mass, time)
+
+def mounth(mass):
+    global date_time
+    date_time.append(int(mass.text))
+    bot.send_message(mass.chat.id, 'Введите число на которое хотите записаться')
+    bot.register_next_step_handler(mass, date)
+
+def year(mass):
+    global date_time
+    date_time.append(int(mass.text))
+    bot.send_message(mass.chat.id, 'Введите месяц на которое хотите записаться')
+    bot.register_next_step_handler(mass, mounth)
+
+def time(mass):
+    global date_time
+    date_time.append(mass.text)
+    bot.register_next_step_handler(mass, servis)
+
+
 
 
 def keyboard():
@@ -83,6 +132,7 @@ def keyboard():
     markup.add(btn1, btn2, btn3, btn4)
     return markup
 
+
 def keyboard_master():
     markup = tl.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     btn1 = tl.types.KeyboardButton('Записи на сегодня')
@@ -90,6 +140,7 @@ def keyboard_master():
     btn3 = tl.types.KeyboardButton(text='/start')
     markup.add(btn1, btn2, btn3)
     return markup
+
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)

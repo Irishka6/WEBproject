@@ -19,4 +19,4 @@ class Appointments(SqlAlchemyBase, SerializerMixin):
 
     # Метод для удобного вывода
     def __repr__(self):
-        return f'<{self.__tablename__}> {self.id} {self.name} id_master: {self.master_id}'
+        return f'{self.id} - {self.id} id_master: {self.master_id}'

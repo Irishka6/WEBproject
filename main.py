@@ -198,9 +198,9 @@ def get_image(image_id):
     return send_file(BytesIO(image.data), mimetype='image/jpeg')
 
 
-@app.route("/zapis")
-def zapis():
-    pass
+@app.route("/zapis/<int:id_master>")
+def zapis(id_master):
+    return render_template("entry.html", master_id=id_master)
 
 
 @app.route("/adding_service/<int:id>", methods=["GET", "POST"])

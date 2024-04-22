@@ -250,7 +250,7 @@ def check_photo():
     sess = db_session.create_session()
     photos = sess.query(Images).all()
     if len(list(filter(lambda x: x.type == 'default', photos))) == 0:
-        with open('default.jpg', 'rb') as f:
+        with open('static/img/default.jpg', 'rb') as f:
             d = f.read()
         img = Images(name='default.jpg', data=d, type='default')
         sess.add(img)

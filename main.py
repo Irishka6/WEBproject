@@ -6,6 +6,8 @@ from flask_restful import abort, Api
 from data import db_session
 from api.users_resources import UsersResources, UsersListResources
 from api.services_resources import ServicesResources, ServicesListResources
+from api.images_resources import ImagesResources, ImagesListResources
+from api.appointments_resources import AppointmentsResources, AppointmentsListResources
 from data.category import Category, create_category
 from data.images import Images
 from data.users import Users, Masters, Clients
@@ -27,6 +29,10 @@ api.add_resource(UsersListResources, '/api/v2/users')
 api.add_resource(UsersResources, '/api/v2/users/<int:user_id>')
 api.add_resource(ServicesListResources, '/api/v2/services')
 api.add_resource(ServicesResources, '/api/v2/services/<int:service_id>')
+api.add_resource(ImagesResources, '/api/v2/images/<int:image_id>')
+api.add_resource(ImagesListResources, '/api/v2/images')
+api.add_resource(AppointmentsResources, '/api/v2/appointments/<int:appointment_id>')
+api.add_resource(AppointmentsListResources, '/api/v2/appointments')
 app.secret_key = ''.join(choice(string.ascii_letters) for _ in range(30))
 
 
@@ -110,8 +116,8 @@ def registration():
     return render_template("registration.html", form=form)
 
 
-@login_required
 @app.route("/registration_master/<int:master_id>", methods=["GET", "POST"])
+@login_required
 def registration_master(master_id):
     db_sess = db_session.create_session()
     master = db_sess.query(Masters).get(master_id)
@@ -123,13 +129,21 @@ def registration_master(master_id):
             master.social = form.telegram.data
             master.description = form.description.data
             master.registrate = True
-            f = form.photo.data
-            img = Images(type='avatar', master_id=master.id, data=f.read(), name=f.filename)
+            img = Images(type='avatar', master_id=master.id, data=form.photo.data.read(), name=form.photo.data.filename)
             db_sess.add(img)
             db_sess.commit()
             return redirect("/")
         return render_template("registration_master.html", title='Регистрация мастера', form=form)
-    elif current_user.id == master.id and master.registrate is True:
+    else:
+        abort(404)
+
+
+@app.route("/editing_master/<int:master_id>", methods=["GET", "POST"])
+@login_required
+def editing_master(master_id):
+    db_sess = db_session.create_session()
+    master = db_sess.query(Masters).get(master_id)
+    if current_user.id == master.id:
         form = RegisterFormMaster()
         if form.validate_on_submit():
             master.category[0] = db_sess.query(Category).filter(Category.name==form.category.data).first()
@@ -138,11 +152,10 @@ def registration_master(master_id):
             master.description = form.description.data
             db_sess.commit()
             return redirect(f"/page_master/{master_id}")
-        else:
-            form.category.data = master.category
-            form.address.data = master.address
-            form.telegram.data = master.social
-            form.description.data = master.description
+        form.category.data = master.category[0].name
+        form.address.data = master.address
+        form.telegram.data = master.social
+        form.description.data = master.description
         return render_template("registration_master.html", title='Редактирование профиля мастера', form=form, master=master)
     else:
         abort(404)
@@ -150,27 +163,25 @@ def registration_master(master_id):
 
 @app.route("/page_master/<int:user_id>")
 def page_master(user_id):
-    if current_user.is_authenticated:
-        db_sess = db_session.create_session()
-        user = db_sess.query(Users).get(user_id)
-        img = list(filter(lambda x: x.type == 'avatar', user.images))
-        if not img:
-            img = db_sess.query(Images).filter(Images.type == 'default').first()
-        else:
-            img = img[0]
-        im = Image.open(BytesIO(img.data))
-        pi = im.load()
-        r, g, b, total = 0, 0, 0, 0
-        x, y = im.size
-        for i in range(x):
-            for j in range(y):
-                total += 1
-                r += pi[i, j][0]
-                g += pi[i, j][1]
-                b += pi[i, j][2]
-        rgb = str((r // total, g // total, b // total))
-        return render_template("page_master.html", photo=rgb, master=user, avatar=img)
-    return redirect('/')
+    db_sess = db_session.create_session()
+    user = db_sess.query(Users).get(user_id)
+    img = list(filter(lambda x: x.type == 'avatar', user.images))
+    if not img:
+        img = db_sess.query(Images).filter(Images.type == 'default').first()
+    else:
+        img = img[0]
+    im = Image.open(BytesIO(img.data))
+    pi = im.load()
+    r, g, b, total = 0, 0, 0, 0
+    x, y = im.size
+    for i in range(x):
+        for j in range(y):
+            total += 1
+            r += pi[i, j][0]
+            g += pi[i, j][1]
+            b += pi[i, j][2]
+    rgb = str((r // total, g // total, b // total))
+    return render_template("page_master.html", photo=rgb, master=user, avatar=img)
 
 
 async def get_avatar(user):
@@ -239,7 +250,7 @@ def check_photo():
     sess = db_session.create_session()
     photos = sess.query(Images).all()
     if len(list(filter(lambda x: x.type == 'default', photos))) == 0:
-        with open('default.jpg', 'rb') as f:
+        with open('static/img/default.jpg', 'rb') as f:
             d = f.read()
         img = Images(name='default.jpg', data=d, type='default')
         sess.add(img)

@@ -1,8 +1,7 @@
 from flask import jsonify
 from flask_restful import Resource, abort
-from api.parser import Parser
+from flask_restful.reqparse import RequestParser
 from data import db_session
-from data.images import Images
 from data.users import Users, Masters, Clients
 from data.category import Category
 
@@ -10,8 +9,14 @@ from data.category import Category
 # Класс для просмотра, удаления и изменения пользователя с помощью API
 class UsersResources(Resource):
     def __init__(self):
-        self.parser = Parser()  # Инициализация парсера для изменения пользователя
-        self.parser.user_update()
+        self.parser = RequestParser()  # Инициализация парсера для изменения пользователя
+        self.parser.add_argument('nick_name', required=False, type=str)
+        self.parser.add_argument('email', required=False, type=str)
+        self.parser.add_argument('password', required=False, type=str)
+        self.parser.add_argument('description', required=False, type=str)
+        self.parser.add_argument('category', required=False, type=str)
+        self.parser.add_argument('address', required=False, type=str)
+        self.parser.add_argument('social', required=False, type=str)
 
     # Получение данных пользователя по id
     def get(self, user_id):
@@ -52,7 +57,6 @@ class UsersResources(Resource):
             if args['category'] is not None:
                 c = session.query(Category).filter(Category.name==args['category']).first()
                 user.category[0] = c
-        # elif user.type == 'Clients':
         session.commit()
         return jsonify({'success': 'OK'})
 
@@ -60,8 +64,15 @@ class UsersResources(Resource):
 # Класс для получения пользователя в виде списка и добавления Услуг с помощью API
 class UsersListResources(Resource):
     def __init__(self):
-        self.parser = Parser()
-        self.parser.user_add()
+        self.parser = RequestParser()
+        self.parser.add_argument('nick_name', required=True, type=str)
+        self.parser.add_argument('email', required=True, type=str)
+        self.parser.add_argument('password', required=True, type=str)
+        self.parser.add_argument('type', required=True, type=str)
+        self.parser.add_argument('description', required=False, type=str)
+        self.parser.add_argument('category', required=False, type=str)
+        self.parser.add_argument('address', required=False, type=str)
+        self.parser.add_argument('social', required=False, type=str)
 
     # Получение массива данных пользователей
     def get(self):
@@ -96,20 +107,20 @@ class UsersListResources(Resource):
         user.set_password(args['password'])
         session.add(user)
         session.commit()
-        return jsonify({'id': user.id})
+        return jsonify({'User ID': user.id})
 
 
 def abort_if_invalid_data(type, args):
     if type == 'Masters':
         list_args = [args['description'], args['address'], args['social'], args['category']]
         if not all(list_args):
-            abort(404, message=f"Invalid data for creating a user.")
+            abort(400, message=f"Invalid data for creating a user.")
 
 
 # Проверка валидности типа
 def abort_if_type_invalid(type):
     if type not in ['Masters', 'Clients']:
-        abort(404, message=f"Invalid type {type}: using 'Masters' or 'Clients'")
+        abort(400, message=f"Invalid type {type}: using 'Masters' or 'Clients'")
 
 
 # Проверка наличия пользователя

@@ -1,10 +1,9 @@
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data import db_session
+from data.db_session import db_sess
 from data.appointments import Appointments
 import datetime
-
 from data.services import Services
 from data.users import Masters
 
@@ -19,36 +18,33 @@ class AppointmentsResources(Resource):
     # Получение данных Записи по id
     def get(self, appointment_id):
         abort_if_appointment_not_found(appointment_id)
-        session = db_session.create_session()
-        appointment = session.query(Appointments).get(appointment_id)
+        appointment = db_sess.query(Appointments).get(appointment_id)
         return jsonify({'appointment': appointment.to_dict(
             only=('id', 'master_id', 'client_id', 'services', 'datetime'))})
 
     # Удаление Записи по id
     def delete(self, appointment_id):
         abort_if_appointment_not_found(appointment_id)
-        session = db_session.create_session()
-        appointment = session.query(Appointments).get(appointment_id)
-        session.delete(appointment)
-        session.commit()
+        appointment = db_sess.query(Appointments).get(appointment_id)
+        db_sess.delete(appointment)
+        db_sess.commit()
         return {'success': 'OK'}
 
     # Измерение Записи
     def post(self, appointment_id):
         args = self.parser.parse_args()
         abort_if_appointment_not_found(appointment_id)
-        session = db_session.create_session()
-        appointment = session.query(Appointments).get(appointment_id)
+        appointment = db_sess.query(Appointments).get(appointment_id)
         appointment.datetime = datetime.datetime.strptime(args['datetime'], '%d.%m.%Y %H:%M') if \
             args['datetime'] is not None else appointment.datetime
         if args['services'] is not None:
-            services = list(map(lambda x: session.query(Services).get(x), args['services']))
-            master = session.query(Masters).get(appointment.master_id)
+            services = list(map(lambda x: db_sess.query(Services).get(x), args['services']))
+            master = db_sess.query(Masters).get(appointment.master_id)
             if not all(list(map(lambda x: x in master.services, services))):
                 abort(400)
             appointment.services.clear()
             appointment.services.extend(services)
-        session.commit()
+        db_sess.commit()
         return {'success': 'OK'}
 
 
@@ -63,32 +59,29 @@ class AppointmentsListResources(Resource):
 
     # Получение массива данных Записей
     def get(self):
-        session = db_session.create_session()
-        appointments = session.query(Appointments).all()
+        appointments = db_sess.query(Appointments).all()
         return jsonify([{'appointment': appointment.to_dict(
             only=('id', 'master_id', 'client_id', 'services', 'datetime'))} for appointment in appointments])
 
     # Создание Записи
     def post(self):
         args = self.parser.parse_args()
-        session = db_session.create_session()
         appointment = Appointments()
         appointment.master_id = args['master_id']
         appointment.client_id = args['client_id']
         appointment.datetime = datetime.datetime.strptime(args['datetime'], '%d.%m.%Y %H:%M')
-        services = list(map(lambda x: session.query(Services).get(x), args['services']))
-        master = session.query(Masters).get(args['master_id'])
+        services = list(map(lambda x: db_sess.query(Services).get(x), args['services']))
+        master = db_sess.query(Masters).get(args['master_id'])
         if not all(list(map(lambda x: x in master.services, services))):
             abort(400)
         appointment.services.extend(services)
-        session.add(appointment)
-        session.commit()
+        db_sess.add(appointment)
+        db_sess.commit()
         return {'Appointment ID': appointment.id}
 
 
 # Проверка наличия Записи
 def abort_if_appointment_not_found(appointment_id):
-    session = db_session.create_session()
-    appointment = session.query(Appointments).get(appointment_id)
+    appointment = db_sess.query(Appointments).get(appointment_id)
     if not appointment:
         abort(404, message=f"Appointment {appointment_id} not found")

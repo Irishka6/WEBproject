@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data import db_session
+from data.db_session import db_sess
 from data.users import Users, Masters, Clients
 from data.category import Category
 
@@ -21,31 +21,35 @@ class UsersResources(Resource):
     # Получение данных пользователя по id
     def get(self, user_id):
         abort_if_users_not_found(user_id)
-        session = db_session.create_session()
-        user = session.query(Users).get(user_id)
+        user = db_sess.query(Users).get(user_id)
         if user.type == 'Clients':
             return jsonify({'users': user.to_dict(
-                only=('id', 'type', 'nick_name', 'email', 'hashed_password'))})
+                only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'appointments'))})
         elif user.type == 'Masters':
             return jsonify({'users': user.to_dict(
                 only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'description', 'category', 'address',
-                      'social', 'images', 'registrate'))})
+                      'social', 'images', 'registrate', 'services', 'appointments'))})
 
     # Удаление пользователя по id
     def delete(self, user_id):
         abort_if_users_not_found(user_id)
-        session = db_session.create_session()
-        user = session.query(Users).get(user_id)
-        session.delete(user)
-        session.commit()
+        user = db_sess.query(Users).get(user_id)
+        if user.type == 'Masters':
+            for img in user.images:
+                db_sess.delete(img)
+            for ser in user.services:
+                db_sess.delete(ser)
+        for appointment in user.appointments:
+            db_sess.delete(appointment)
+        db_sess.delete(user)
+        db_sess.commit()
         return jsonify({'success': 'OK'})
 
     # Изменение пользователя
     def post(self, user_id):
         args = self.parser.parse_args()
         abort_if_users_not_found(user_id)
-        session = db_session.create_session()
-        user = session.query(Users).get(user_id)
+        user = db_sess.query(Users).get(user_id)
         user.nick_name = args['nick_name'] if args['nick_name'] is not None else user.nick_name
         user.email = args['email'] if args['email'] is not None else user.email
         if args['password'] is not None:
@@ -55,9 +59,9 @@ class UsersResources(Resource):
             user.address = args['address'] if args['address'] is not None else user.address
             user.social = args['social'] if args['social'] is not None else user.social
             if args['category'] is not None:
-                c = session.query(Category).filter(Category.name==args['category']).first()
+                c = db_sess.query(Category).filter(Category.name==args['category']).first()
                 user.category[0] = c
-        session.commit()
+        db_sess.commit()
         return jsonify({'success': 'OK'})
 
 
@@ -76,13 +80,12 @@ class UsersListResources(Resource):
 
     # Получение массива данных пользователей
     def get(self):
-        session = db_session.create_session()
-        users = session.query(Users).all()
+        users = db_sess.query(Users).all()
         return jsonify([{'user': user.to_dict(
-            only=('id', 'type', 'nick_name', 'email', 'hashed_password'))} if user.type == 'Clients' else
+            only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'appointments'))} if user.type == 'Clients' else
             {'user': user.to_dict(only=('id', 'type', 'nick_name', 'email', 'hashed_password',
                                         'description', 'category', 'services', 'address', 'social', 'images',
-                                        'registrate'))}
+                                        'registrate', 'appointments'))}
             for user in users])
 
     # Создание пользователя
@@ -90,7 +93,6 @@ class UsersListResources(Resource):
         args = self.parser.parse_args()
         abort_if_type_invalid(args['type'])
         abort_if_invalid_data(args['type'], args)
-        session = db_session.create_session()
         if args['type'] == 'Masters':
             user = Masters(
                 description=args['description'],
@@ -98,15 +100,15 @@ class UsersListResources(Resource):
                 social=args['social'],
                 registrate=True
             )
-            c = session.query(Category).filter(Category.name == args['category']).first()
+            c = db_sess.query(Category).filter(Category.name == args['category']).first()
             user.category.append(c)
         elif args['type'] == 'Clients':
             user = Clients()
         user.nick_name = args['nick_name']
         user.email = args['email']
         user.set_password(args['password'])
-        session.add(user)
-        session.commit()
+        db_sess.add(user)
+        db_sess.commit()
         return jsonify({'User ID': user.id})
 
 
@@ -125,7 +127,6 @@ def abort_if_type_invalid(type):
 
 # Проверка наличия пользователя
 def abort_if_users_not_found(user_id):
-    session = db_session.create_session()
-    user = session.query(Users).get(user_id)
+    user = db_sess.query(Users).get(user_id)
     if not user:
         abort(404, message=f"Users {user_id} not found")

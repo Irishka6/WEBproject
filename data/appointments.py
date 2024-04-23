@@ -3,7 +3,6 @@ from sqlalchemy import orm
 from sqlalchemy_serializer import SerializerMixin
 from data.db_session import SqlAlchemyBase
 from data.services import Services
-from data.users import Users
 
 
 association_table = sa.Table(

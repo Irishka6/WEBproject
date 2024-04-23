@@ -1,8 +1,7 @@
-import base64
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data import db_session
+from data.db_session import db_sess
 from data.images import Images
 from data.users import Users
 
@@ -18,35 +17,32 @@ class ImagesResources(Resource):
     # Получение данных Изображения по id
     def get(self, image_id):
         abort_if_image_not_found(image_id)
-        session = db_session.create_session()
-        image = session.query(Images).get(image_id)
+        image = db_sess.query(Images).get(image_id)
         img = image.to_dict(only=('id', 'master_id', 'type', 'name', 'data'))
         return jsonify({'image': img})
 
     # Удаление Изображения по id
     def delete(self, image_id):
         abort_if_image_not_found(image_id)
-        session = db_session.create_session()
-        image = session.query(Images).get(image_id)
-        session.delete(image)
-        session.commit()
+        image = db_sess.query(Images).get(image_id)
+        db_sess.delete(image)
+        db_sess.commit()
         return {'success': 'OK'}
 
     # Измерение Изображения
     def post(self, image_id):
         args = self.parser.parse_args()
         abort_if_image_not_found(image_id)
-        session = db_session.create_session()
-        image = session.query(Images).get(image_id)
-        image.data = base64.b64decode(args['data']) if args['data'] is not None else image.data
+        image = db_sess.query(Images).get(image_id)
+        image.data = args['data'] if args['data'] is not None else image.data
         image.name = args['name'] if args['name'] is not None else image.name
         image.type = args['type'] if args['type'] is not None else image.type
         if args['type'] == 'avatar':
-            user = session.query(Users).get(image.master_id)
+            user = db_sess.query(Users).get(image.master_id)
             avatar = list(filter(lambda x: x.type == 'avatar', user.images))
             if avatar:
-                session.delete(avatar[0])
-        session.commit()
+                db_sess.delete(avatar[0])
+        db_sess.commit()
         return {'success': 'OK'}
 
 
@@ -61,33 +57,30 @@ class ImagesListResources(Resource):
 
     # Получение массива данных Изображений
     def get(self):
-        session = db_session.create_session()
-        images = session.query(Images).all()
+        images = db_sess.query(Images).all()
         return jsonify([{'image': image.to_dict(
             only=('id', 'master_id', 'name', 'type', 'data'))} for image in images])
 
     # Создание Изображения
     def post(self):
         args = self.parser.parse_args()
-        session = db_session.create_session()
         img = Images()
         img.master_id = args['master_id']
         img.type = args['type']
-        img.data = base64.b64decode(args['data'])
-        session.add(img)
+        img.data = args['data']
+        db_sess.add(img)
         img.name = args['name'] if args['name'] is not None else f'img{img.id}.jpg'
         if args['type'] == 'avatar':
-            user = session.query(Users).get(args['master_id'])
+            user = db_sess.query(Users).get(args['master_id'])
             avatar = list(filter(lambda x: x.type == 'avatar', user.images))
             if avatar:
-                session.delete(avatar[0])
-        session.commit()
+                db_sess.delete(avatar[0])
+        db_sess.commit()
         return {'Image ID': img.id}
 
 
 # Проверка наличия Изображения
 def abort_if_image_not_found(image_id):
-    session = db_session.create_session()
-    image = session.query(Images).get(image_id)
+    image = db_sess.query(Images).get(image_id)
     if not image:
         abort(404, message=f"Image {image_id} not found")

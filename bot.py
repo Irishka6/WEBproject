@@ -1,17 +1,15 @@
 from calendar import monthrange
-
 import telebot as tl
 from data import db_session
 from data.appointments import Appointments
-from data.category import Category, create_category
-from data.images import Images
 from data.users import Users, Masters, Clients
 from data.services import Services
 import datetime
 
-bot = tl.TeleBot("6778264892:AAFj1C5Sa_7OYViFp_71oiENscNNxEqOijw")
+bot = tl.TeleBot("6778264892:AAEbs8cMe4cofsaUBFgz-dj7UIqrpa1SX9s")
 user = ''
-db_session.global_init('db/db.sqlite')
+db_session.global_init()
+db_sess = db_session.create_session()
 date_time = []
 month = ['январь',	'февраль',	'март',	'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
 
@@ -30,22 +28,21 @@ def emaile(message):
         bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
         date_time = []
         bot.register_next_step_handler(message, emaile)
-    db_sess = db_session.create_session()
     if not ('@' in email and ('.com' in email or '.ru' in email)):
-        bot.send_message(message.chat.id, f"Попробуй ещё раз, ты ввел не почту",
+        bot.send_message(message.chat.id, "Попробуй ещё раз, ты ввел не почту",
                          parse_mode="html")
         bot.register_next_step_handler(message, emaile)
     else:
         if db_sess.query(Users).filter(Users.email == email).first():
             user = db_sess.query(Users).filter(Users.email == email).first()
             if user.type == 'Masters':
-                bot.send_message(message.chat.id, f"{user.nick_name}, что вы хотели бы узнать",
-                                parse_mode="html", reply_markup=keyboard_master())
+                bot.send_message(message.chat.id, "{user.nick_name}, что вы хотели бы узнать",
+                                 parse_mode="html", reply_markup=keyboard_master())
             else:
                 bot.send_message(message.chat.id, f"{user.nick_name}, что вы хотели бы узнать",
                                  parse_mode="html", reply_markup=keyboard())
         else:
-            bot.send_message(message.chat.id, f"Ты не зарегестрирован на сайте",
+            bot.send_message(message.chat.id, "Ты не зарегестрирован на сайте",
                              parse_mode="html")
             bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
             bot.register_next_step_handler(message, emaile)
@@ -62,7 +59,9 @@ def mess(message):
     if user != '':
         if user.type == 'Clients':
             if message.text == 'Записаться':
-                bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+                bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на"
+                                                  f" странице сайта, если вы не помните нажмите на 'Выбрать мастера'"
+                                                  f" и найдите Nick name мастера в списке",
                                  parse_mode="html", reply_markup=keyboard())
                 bot.register_next_step_handler(message, adding_zapis)
             if message.text == 'Выбрать мастера':
@@ -104,17 +103,16 @@ def mess(message):
 
 
 def my_zapis(user_type, date=''):
-    db_sess = db_session.create_session()
     t = []
     if user_type == 'Clients':
         appoint = db_sess.query(Appointments).filter(user.id == Appointments.client_id)
         for item in appoint:
-            if item.date >= datetime.datetime.today().date():
-                if item.date == datetime.datetime.today().date() and item.time >= datetime.datetime.today().time():
-                    r = f'{item.id} - {db_sess.query(Services).filter(Services.id == item.service_id).first().name} - {db_sess.query(Masters).filter(Masters.id == item.master_id).first().nick_name} - {item.date} - {item.time}'
+            if item.datetime.date() >= datetime.datetime.today().date():
+                if item.datetime.date() == datetime.datetime.today().date() and item.datetime.time() >= datetime.datetime.today().time():
+                    r = f'{item.id} - {item.services[0].name} - {db_sess.query(Masters).filter(Masters.id == item.master_id).first().nick_name} - {item.datetime}'
                     t.append(r)
-                elif item.date >= datetime.datetime.today().date():
-                    r = f'{item.id} - {db_sess.query(Services).filter(Services.id == item.service_id).first().name} - {db_sess.query(Masters).filter(Masters.id == item.master_id).first().nick_name} - {item.date} - {item.time}'
+                elif item.datetime.date() >= datetime.datetime.today().date():
+                    r = f'{item.id} - {item.services[0].name} - {db_sess.query(Masters).filter(Masters.id == item.master_id).first().nick_name} - {item.datetime}'
                     t.append(r)
                 else:
                     db_sess.delete(item)
@@ -125,18 +123,19 @@ def my_zapis(user_type, date=''):
     else:
         if date == 'now':
             datee = datetime.datetime.today().date()
-            appoint = db_sess.query(Appointments).filter(user.id == Appointments.master_id and Appointments.date == datee)
+            appoint = db_sess.query(Appointments).filter(user.id == Appointments.master_id and Appointments.datetime.date() == datee)
         else:
             datee = datetime.datetime.today().date()
             appoint = db_sess.query(Appointments).filter(
-                user.id == Appointments.master_id and Appointments.date >= datee and Appointments.date <= (datee + datetime.timedelta(days=10)))
+                user.id == Appointments.master_id and datee <= Appointments.datetime.date() <= (
+                            datee + datetime.timedelta(days=10)))
         for item in appoint:
-            if item.date >= datetime.datetime.today().date():
-                if item.date == datetime.datetime.today().date() and item.time >= datetime.datetime.today().time():
-                    r = f'{item.id} - {db_sess.query(Services).filter(Services.id == item.service_id).first().name} - {db_sess.query(Clients).filter(Clients.id == item.client_id).first().nick_name} - {item.date} - {item.time}'
+            if item.datetime.date() >= datetime.datetime.today().date():
+                if item.datetime.date() == datetime.datetime.today().date() and item.datetime.time() >= datetime.datetime.today().time():
+                    r = f'{item.id} - {item.services[0].name} - {db_sess.query(Clients).filter(Clients.id == item.client_id).first().nick_name} - {item.datetime}'
                     t.append(r)
-                elif item.date >= datetime.datetime.today().date():
-                    r = f'{item.id} - {db_sess.query(Services).filter(Services.id == item.service_id).first().name} - {db_sess.query(Clients).filter(Clients.id == item.client_id).first().nick_name} - {item.date} - {item.time}'
+                elif item.datetime.date() >= datetime.datetime.today().date():
+                    r = f'{item.id} - {item.services[0].name} - {db_sess.query(Clients).filter(Clients.id == item.client_id).first().nick_name} - {item.datetime}'
                     t.append(r)
                 else:
                     db_sess.delete(item)
@@ -148,7 +147,6 @@ def my_zapis(user_type, date=''):
 
 
 def delete_zapis(mass):
-    db_sess = db_session.create_session()
     entr = db_sess.query(Appointments).filter(Appointments.id == int(mass.text)).first()
     db_sess.delete(entr)
     db_sess.commit()
@@ -157,7 +155,6 @@ def delete_zapis(mass):
 
 
 def master_id(mass):
-    db_sess = db_session.create_session()
     masters = db_sess.query(Masters).all()
     print('\n'.join([repr(i) for i in masters]))
     bot.send_message(mass, '\n'.join([repr(i) for i in masters]))
@@ -166,7 +163,6 @@ def master_id(mass):
 def adding_zapis(mass):
     global date_time
     if ''.join([i for i in mass.text if i in '1234567890']) == mass.text:
-        db_sess = db_session.create_session()
         entry = db_sess.query(Appointments).filter(Appointments.master_id == int(mass.text) and datetime.date.today() <= Appointments.date and datetime.datetime.time() <= Appointments.time)
         date_time.append(int(mass.text))
         print('\n'.join([repr(i) for i in entry]))
@@ -176,17 +172,14 @@ def adding_zapis(mass):
         sortede(mass)
 
 
-
 def servis(mass):
     global date_time, user
-    db_sess = db_session.create_session()
     print(date_time[0], user.id)
     entryy = Appointments()
     entryy.master_id = date_time[0]
     entryy.client_id = user.id
-    entryy.service_id = int(mass.text)
-    entryy.date = datetime.date(date_time[1], date_time[2], date_time[3])
-    entryy.time = datetime.time(*[int(i) for i in date_time[4].split(':')])
+    entryy.services.append(db_sess.query(Services).get(int(mass.text)))
+    entryy.datetime = datetime.datetime(date_time[1], date_time[2], date_time[3], *[int(i) for i in date_time[4].split(':')])
     db_sess.add(entryy)
     db_sess.commit()
     bot.send_message(mass.chat.id,
@@ -195,6 +188,7 @@ def servis(mass):
                      f' {db_sess.query(Masters).filter(Masters.id == date_time[0]).first().address}',
                      reply_markup=keyboard())
     date_time = []
+
 
 def sortede(mass):
     global date_time
@@ -211,7 +205,8 @@ def sortede(mass):
         bot.register_next_step_handler(mass, mounth)
     if mass.text == 'Записаться':
         bot.send_message(mass.chat.id,
-                         f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+                         f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не"
+                         f" помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
                          parse_mode="html", reply_markup=keyboard())
         bot.register_next_step_handler(mass, adding_zapis)
     if mass.text == 'Выбрать мастера':
@@ -225,18 +220,21 @@ def date(mass):
     global date_time, month
     if datetime.date.today().day > int(mass.text) and date_time[2] == datetime.date.today().month:
         bot.send_message(mass.chat.id,
-                         f'Вы не можете записаться на число, которое уже прошло, выберете другое или измените месяц. Выбранный месяц: {month[date_time[2] - 1]}',
+                         f'Вы не можете записаться на число, которое уже прошло, выберете другое или измените'
+                         f' месяц. Выбранный месяц: {month[date_time[2] - 1]}',
                          reply_markup=adding_izmen())
         bot.register_next_step_handler(mass, sortede)
     elif monthrange(date_time[1], date_time[2])[1] < int(mass.text) or int(mass.text) < 1:
         bot.send_message(mass.chat.id,
-                         'Вы не можете записаться на число, которого нет в выбранном вами месяце, введите другоеили измените месяц. Выбранный месяц: {month[date_time[2] - 1]}',
+                         'Вы не можете записаться на число, которого нет в выбранном вами месяце, введите'
+                         ' другоеили измените месяц. Выбранный месяц: {month[date_time[2] - 1]}',
                          reply_markup=adding_izmen())
         bot.register_next_step_handler(mass, sortede)
     else:
         date_time.append(int(mass.text))
         bot.send_message(mass.chat.id, 'Введите время на которое хотите записаться в формате 12:10')
         bot.register_next_step_handler(mass, time)
+
 
 def mounth(mass):
     global date_timem, month
@@ -259,16 +257,14 @@ def time(mass):
     global date_time
     if datetime.datetime(date_time[1], date_time[2], date_time[3], *[int(i) for i in mass.text.split(':')]) >= datetime.datetime.now():
         date_time.append(mass.text)
-        db_sess = db_session.create_session()
         servise = db_sess.query(Services).filter(Services.master_id == int(date_time[0]))
         bot.send_message(mass.chat.id, 'Введите номер услуги, на которую хотите записаться')
-        bot.send_message(mass.chat.id, f'\n'.join([repr(i) for i in servise]), reply_markup=keyboard())
+        bot.send_message(mass.chat.id, '\n'.join([repr(i) for i in servise]), reply_markup=keyboard())
         bot.register_next_step_handler(mass, servis)
     else:
-        bot.send_message(mass.chat.id, 'Введите новое время, на которое хотите записаться в формате 12:10, запись на ранее указанное вами время не возможно', reply_markup=keyboard())
+        bot.send_message(mass.chat.id, 'Введите новое время, на которое хотите записаться в формате 12:10, запись'
+                                       ' на ранее указанное вами время не возможно', reply_markup=keyboard())
         bot.register_next_step_handler(mass, time)
-
-
 
 
 def keyboard():
@@ -289,6 +285,7 @@ def keyboard_master():
     btn3 = tl.types.KeyboardButton(text='/start')
     markup.add(btn1, btn2, btn3)
     return markup
+
 
 def keyboard_mounth():
     global month

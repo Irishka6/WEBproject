@@ -16,4 +16,4 @@ class Services(SqlAlchemyBase, SerializerMixin):
 
     # Метод для удобного вывода
     def __repr__(self):
-        return f'{self.id} - {self.name}'
+        return f'{self.id} - {self.name} - {self.price}'

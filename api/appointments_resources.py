@@ -1,11 +1,11 @@
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data.db_session import db_sess
 from data.appointments import Appointments
 import datetime
 from data.services import Services
 from data.users import Masters
+from data.db_session import create_session
 
 
 # Класс для просмотра, удаления и изменения Записи с помощью API
@@ -17,21 +17,27 @@ class AppointmentsResources(Resource):
 
     # Получение данных Записи по id
     def get(self, appointment_id):
+        db_sess = create_session()
         abort_if_appointment_not_found(appointment_id)
         appointment = db_sess.query(Appointments).get(appointment_id)
-        return jsonify({'appointment': appointment.to_dict(
+        res = jsonify({'appointment': appointment.to_dict(
             only=('id', 'master_id', 'client_id', 'services', 'datetime'))})
+        db_sess.close()
+        return res
 
     # Удаление Записи по id
     def delete(self, appointment_id):
+        db_sess = create_session()
         abort_if_appointment_not_found(appointment_id)
         appointment = db_sess.query(Appointments).get(appointment_id)
         db_sess.delete(appointment)
         db_sess.commit()
+        db_sess.close()
         return {'success': 'OK'}
 
     # Измерение Записи
     def post(self, appointment_id):
+        db_sess = create_session()
         args = self.parser.parse_args()
         abort_if_appointment_not_found(appointment_id)
         appointment = db_sess.query(Appointments).get(appointment_id)
@@ -45,6 +51,7 @@ class AppointmentsResources(Resource):
             appointment.services.clear()
             appointment.services.extend(services)
         db_sess.commit()
+        db_sess.close()
         return {'success': 'OK'}
 
 
@@ -59,12 +66,16 @@ class AppointmentsListResources(Resource):
 
     # Получение массива данных Записей
     def get(self):
+        db_sess = create_session()
         appointments = db_sess.query(Appointments).all()
-        return jsonify([{'appointment': appointment.to_dict(
+        res = jsonify([{'appointment': appointment.to_dict(
             only=('id', 'master_id', 'client_id', 'services', 'datetime'))} for appointment in appointments])
+        db_sess.close()
+        return res
 
     # Создание Записи
     def post(self):
+        db_sess = create_session()
         args = self.parser.parse_args()
         appointment = Appointments()
         appointment.master_id = args['master_id']
@@ -77,11 +88,15 @@ class AppointmentsListResources(Resource):
         appointment.services.extend(services)
         db_sess.add(appointment)
         db_sess.commit()
-        return {'Appointment ID': appointment.id}
+        res = {'Appointment ID': appointment.id}
+        db_sess.close()
+        return res
 
 
 # Проверка наличия Записи
 def abort_if_appointment_not_found(appointment_id):
+    db_sess = create_session()
     appointment = db_sess.query(Appointments).get(appointment_id)
     if not appointment:
         abort(404, message=f"Appointment {appointment_id} not found")
+    db_sess.close()

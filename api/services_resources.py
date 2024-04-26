@@ -1,10 +1,10 @@
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data.db_session import db_sess
+import datetime
 from data.users import Users
 from data.services import Services
-import datetime
+from data.db_session import create_session
 
 
 # Класс для просмотра, удаления и изменения Услуг с помощью API
@@ -17,21 +17,27 @@ class ServicesResources(Resource):
 
     # Получение данных Услуги по id
     def get(self, service_id):
+        db_sess = create_session()
         abort_if_service_not_found(service_id)
         service = db_sess.query(Services).get(service_id)
-        return jsonify({'service': service.to_dict(
+        res = jsonify({'service': service.to_dict(
             only=('id', 'master_id', 'name', 'duration', 'price'))})
+        db_sess.close()
+        return res
 
     # Удаление Услуги по id
     def delete(self, service_id):
+        db_sess = create_session()
         abort_if_service_not_found(service_id)
         service = db_sess.query(Services).get(service_id)
         db_sess.delete(service)
         db_sess.commit()
+        db_sess.close()
         return jsonify({'success': 'OK'})
 
     # Изменение Услуги
     def post(self, service_id):
+        db_sess = create_session()
         args = self.parser.parse_args()
         abort_if_service_not_found(service_id)
         service = db_sess.query(Services).get(service_id)
@@ -39,6 +45,7 @@ class ServicesResources(Resource):
         service.duration = datetime.datetime.strptime(args['duration'], '%H:%M').time() if args['duration'] is not None else service.duration
         service.name = args['price'] if args['price'] is not None else service.price
         db_sess.commit()
+        db_sess.close()
         return jsonify({'success': 'OK'})
 
 
@@ -53,12 +60,16 @@ class ServicesListResources(Resource):
 
     # Получение массива данных Услуг
     def get(self):
+        db_sess = create_session()
         services = db_sess.query(Services).all()
-        return jsonify([{'service': service.to_dict(
+        res = jsonify([{'service': service.to_dict(
             only=('id', 'master_id', 'name', 'duration', 'price'))} for service in services])
+        db_sess.close()
+        return res
 
     # Создание Услуги
     def post(self):
+        db_sess = create_session()
         args = self.parser.parse_args()
         user = db_sess.query(Users).get(args['master_id'])
         if user.type != 'Masters':
@@ -71,11 +82,15 @@ class ServicesListResources(Resource):
         )
         db_sess.add(service)
         db_sess.commit()
-        return jsonify({'Service ID': service.id})
+        res = jsonify({'Service ID': service.id})
+        db_sess.close()
+        return res
 
 
 # Проверка наличия Услуги
 def abort_if_service_not_found(service_id):
+    db_sess = create_session()
     service = db_sess.query(Services).get(service_id)
     if not service:
         abort(404, message=f"Service {service_id} not found")
+    db_sess.close()

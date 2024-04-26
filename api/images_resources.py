@@ -1,9 +1,9 @@
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data.db_session import db_sess
 from data.images import Images
 from data.users import Users
+from data.db_session import create_session
 
 
 # Класс для просмотра, удаления и изменения Изображения с помощью API
@@ -16,21 +16,26 @@ class ImagesResources(Resource):
 
     # Получение данных Изображения по id
     def get(self, image_id):
+        db_sess = create_session()
         abort_if_image_not_found(image_id)
         image = db_sess.query(Images).get(image_id)
-        img = image.to_dict(only=('id', 'master_id', 'type', 'name', 'data'))
-        return jsonify({'image': img})
+        res = jsonify({'image': image.to_dict(only=('id', 'master_id', 'type', 'name', 'data'))})
+        db_sess.close()
+        return res
 
     # Удаление Изображения по id
     def delete(self, image_id):
+        db_sess = create_session()
         abort_if_image_not_found(image_id)
         image = db_sess.query(Images).get(image_id)
         db_sess.delete(image)
         db_sess.commit()
+        db_sess.close()
         return {'success': 'OK'}
 
     # Измерение Изображения
     def post(self, image_id):
+        db_sess = create_session()
         args = self.parser.parse_args()
         abort_if_image_not_found(image_id)
         image = db_sess.query(Images).get(image_id)
@@ -43,6 +48,7 @@ class ImagesResources(Resource):
             if avatar:
                 db_sess.delete(avatar[0])
         db_sess.commit()
+        db_sess.close()
         return {'success': 'OK'}
 
 
@@ -57,12 +63,16 @@ class ImagesListResources(Resource):
 
     # Получение массива данных Изображений
     def get(self):
+        db_sess = create_session()
         images = db_sess.query(Images).all()
-        return jsonify([{'image': image.to_dict(
+        res = jsonify([{'image': image.to_dict(
             only=('id', 'master_id', 'name', 'type', 'data'))} for image in images])
+        db_sess.close()
+        return res
 
     # Создание Изображения
     def post(self):
+        db_sess = create_session()
         args = self.parser.parse_args()
         img = Images()
         img.master_id = args['master_id']
@@ -76,11 +86,15 @@ class ImagesListResources(Resource):
             if avatar:
                 db_sess.delete(avatar[0])
         db_sess.commit()
-        return {'Image ID': img.id}
+        res = {'Image ID': img.id}
+        db_sess.close()
+        return res
 
 
 # Проверка наличия Изображения
 def abort_if_image_not_found(image_id):
+    db_sess = create_session()
     image = db_sess.query(Images).get(image_id)
     if not image:
         abort(404, message=f"Image {image_id} not found")
+    db_sess.close()

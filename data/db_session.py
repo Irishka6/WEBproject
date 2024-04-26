@@ -28,7 +28,3 @@ def global_init():
 def create_session() -> Session:
     global __factory
     return __factory()
-
-
-global_init()
-db_sess = create_session()

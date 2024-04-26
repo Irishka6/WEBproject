@@ -1,6 +1,6 @@
 from calendar import monthrange
 import telebot as tl
-from data import db_session
+from data.db_session import create_session, global_init
 from data.appointments import Appointments
 from data.users import Users, Masters, Clients
 from data.services import Services
@@ -8,8 +8,7 @@ import datetime
 
 bot = tl.TeleBot("6778264892:AAEbs8cMe4cofsaUBFgz-dj7UIqrpa1SX9s")
 user = ''
-db_session.global_init()
-db_sess = db_session.create_session()
+global_init()
 date_time = []
 month = ['январь',	'февраль',	'март',	'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
 
@@ -22,6 +21,7 @@ def get_text_messages(message):
 
 def emaile(message):
     global user, date_time
+    db_sess = create_session()
     email = message.text.strip()
     if email == '/start':
         user = ''
@@ -46,6 +46,7 @@ def emaile(message):
                              parse_mode="html")
             bot.send_message(message.chat.id, "Привет, введи свою электронную почту", parse_mode="html")
             bot.register_next_step_handler(message, emaile)
+    db_sess.close()
 
 
 @bot.message_handler(content_types=["text"])
@@ -59,9 +60,7 @@ def mess(message):
     if user != '':
         if user.type == 'Clients':
             if message.text == 'Записаться':
-                bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на"
-                                                  f" странице сайта, если вы не помните нажмите на 'Выбрать мастера'"
-                                                  f" и найдите Nick name мастера в списке",
+                bot.send_message(message.chat.id, f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
                                  parse_mode="html", reply_markup=keyboard())
                 bot.register_next_step_handler(message, adding_zapis)
             if message.text == 'Выбрать мастера':
@@ -103,6 +102,7 @@ def mess(message):
 
 
 def my_zapis(user_type, date=''):
+    db_sess = create_session()
     t = []
     if user_type == 'Clients':
         appoint = db_sess.query(Appointments).filter(user.id == Appointments.client_id)
@@ -143,37 +143,45 @@ def my_zapis(user_type, date=''):
             else:
                 db_sess.delete(item)
                 db_sess.commit()
+    db_sess.close()
     return t
 
 
 def delete_zapis(mass):
+    db_sess = create_session()
     entr = db_sess.query(Appointments).filter(Appointments.id == int(mass.text)).first()
     db_sess.delete(entr)
     db_sess.commit()
+    db_sess.close()
     bot.send_message(mass.chat.id,
                      'Вы успешно удалили запись')
 
 
 def master_id(mass):
-    masters = db_sess.query(Masters).all()
+    db_sess = create_session()
+    masters = list(filter(lambda x: len(x.services) != 0, db_sess.query(Masters).all()))
     print('\n'.join([repr(i) for i in masters]))
     bot.send_message(mass, '\n'.join([repr(i) for i in masters]))
+    db_sess.close()
 
 
 def adding_zapis(mass):
     global date_time
+    db_sess = create_session()
     if ''.join([i for i in mass.text if i in '1234567890']) == mass.text:
         entry = db_sess.query(Appointments).filter(Appointments.master_id == int(mass.text) and datetime.date.today() <= Appointments.date and datetime.datetime.time() <= Appointments.time)
         date_time.append(int(mass.text))
         print('\n'.join([repr(i) for i in entry]))
-        bot.send_message(mass.chat.id, 'Введите год на которое хотите записаться')
+        bot.send_message(mass.chat.id, 'Введите год на который хотите записаться')
         bot.register_next_step_handler(mass, year)
     else:
         sortede(mass)
+    db_sess.close()
 
 
 def servis(mass):
     global date_time, user
+    db_sess = create_session()
     print(date_time[0], user.id)
     entryy = Appointments()
     entryy.master_id = date_time[0]
@@ -188,6 +196,7 @@ def servis(mass):
                      f' {db_sess.query(Masters).filter(Masters.id == date_time[0]).first().address}',
                      reply_markup=keyboard())
     date_time = []
+    db_sess.close()
 
 
 def sortede(mass):
@@ -205,8 +214,7 @@ def sortede(mass):
         bot.register_next_step_handler(mass, mounth)
     if mass.text == 'Записаться':
         bot.send_message(mass.chat.id,
-                         f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не"
-                         f" помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
+                         f"{user.nick_name}, введите число, которое вы запомнили на странице сайта, если вы не помните нажмите на 'Выбрать мастера' и найдите Nick name мастера в списке",
                          parse_mode="html", reply_markup=keyboard())
         bot.register_next_step_handler(mass, adding_zapis)
     if mass.text == 'Выбрать мастера':
@@ -220,14 +228,12 @@ def date(mass):
     global date_time, month
     if datetime.date.today().day > int(mass.text) and date_time[2] == datetime.date.today().month:
         bot.send_message(mass.chat.id,
-                         f'Вы не можете записаться на число, которое уже прошло, выберете другое или измените'
-                         f' месяц. Выбранный месяц: {month[date_time[2] - 1]}',
+                         f'Вы не можете записаться на число, которое уже прошло, выберете другое или измените месяц. Выбранный месяц: {month[date_time[2] - 1]}',
                          reply_markup=adding_izmen())
         bot.register_next_step_handler(mass, sortede)
     elif monthrange(date_time[1], date_time[2])[1] < int(mass.text) or int(mass.text) < 1:
         bot.send_message(mass.chat.id,
-                         'Вы не можете записаться на число, которого нет в выбранном вами месяце, введите'
-                         ' другоеили измените месяц. Выбранный месяц: {month[date_time[2] - 1]}',
+                         'Вы не можете записаться на число, которого нет в выбранном вами месяце, введите другоеили измените месяц. Выбранный месяц: {month[date_time[2] - 1]}',
                          reply_markup=adding_izmen())
         bot.register_next_step_handler(mass, sortede)
     else:
@@ -242,10 +248,11 @@ def mounth(mass):
     bot.send_message(mass.chat.id, 'Введите число на которое хотите записаться')
     bot.register_next_step_handler(mass, date)
 
+
 def year(mass):
     global date_time
     print(datetime.date.today().year)
-    if int(mass.text) != int(datetime.date.today().year):
+    if mass.text != str(datetime.date.today().year):
         bot.send_message(mass.chat.id, 'К сожалению нельзя записаться на год вперед, поэтому укажите текущий год')
         bot.register_next_step_handler(mass, year)
     else:
@@ -253,7 +260,9 @@ def year(mass):
         bot.send_message(mass.chat.id, 'Введите месяц, на который хотите записаться', reply_markup=keyboard_mounth())
         bot.register_next_step_handler(mass, mounth)
 
+
 def time(mass):
+    db_sess = create_session()
     global date_time
     if datetime.datetime(date_time[1], date_time[2], date_time[3], *[int(i) for i in mass.text.split(':')]) >= datetime.datetime.now():
         date_time.append(mass.text)
@@ -262,9 +271,9 @@ def time(mass):
         bot.send_message(mass.chat.id, '\n'.join([repr(i) for i in servise]), reply_markup=keyboard())
         bot.register_next_step_handler(mass, servis)
     else:
-        bot.send_message(mass.chat.id, 'Введите новое время, на которое хотите записаться в формате 12:10, запись'
-                                       ' на ранее указанное вами время не возможно', reply_markup=keyboard())
+        bot.send_message(mass.chat.id, 'Введите новое время, на которое хотите записаться в формате 12:10, запись на ранее указанное вами время не возможно', reply_markup=keyboard())
         bot.register_next_step_handler(mass, time)
+    db_sess.close()
 
 
 def keyboard():

@@ -1,9 +1,9 @@
 from flask import jsonify
 from flask_restful import Resource, abort
 from flask_restful.reqparse import RequestParser
-from data.db_session import db_sess
 from data.users import Users, Masters, Clients
 from data.category import Category
+from data.db_session import create_session
 
 
 # Класс для просмотра, удаления и изменения пользователя с помощью API
@@ -20,18 +20,22 @@ class UsersResources(Resource):
 
     # Получение данных пользователя по id
     def get(self, user_id):
+        db_sess = create_session()
         abort_if_users_not_found(user_id)
         user = db_sess.query(Users).get(user_id)
         if user.type == 'Clients':
-            return jsonify({'users': user.to_dict(
+            res = jsonify({'users': user.to_dict(
                 only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'appointments'))})
         elif user.type == 'Masters':
-            return jsonify({'users': user.to_dict(
+            res = jsonify({'users': user.to_dict(
                 only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'description', 'category', 'address',
                       'social', 'images', 'registrate', 'services', 'appointments'))})
+        db_sess.close()
+        return res
 
     # Удаление пользователя по id
     def delete(self, user_id):
+        db_sess = create_session()
         abort_if_users_not_found(user_id)
         user = db_sess.query(Users).get(user_id)
         if user.type == 'Masters':
@@ -43,10 +47,12 @@ class UsersResources(Resource):
             db_sess.delete(appointment)
         db_sess.delete(user)
         db_sess.commit()
+        db_sess.close()
         return jsonify({'success': 'OK'})
 
     # Изменение пользователя
     def post(self, user_id):
+        db_sess = create_session()
         args = self.parser.parse_args()
         abort_if_users_not_found(user_id)
         user = db_sess.query(Users).get(user_id)
@@ -62,6 +68,7 @@ class UsersResources(Resource):
                 c = db_sess.query(Category).filter(Category.name==args['category']).first()
                 user.category[0] = c
         db_sess.commit()
+        db_sess.close()
         return jsonify({'success': 'OK'})
 
 
@@ -80,16 +87,20 @@ class UsersListResources(Resource):
 
     # Получение массива данных пользователей
     def get(self):
+        db_sess = create_session()
         users = db_sess.query(Users).all()
-        return jsonify([{'user': user.to_dict(
+        res = jsonify([{'user': user.to_dict(
             only=('id', 'type', 'nick_name', 'email', 'hashed_password', 'appointments'))} if user.type == 'Clients' else
             {'user': user.to_dict(only=('id', 'type', 'nick_name', 'email', 'hashed_password',
                                         'description', 'category', 'services', 'address', 'social', 'images',
                                         'registrate', 'appointments'))}
             for user in users])
+        db_sess.close()
+        return res
 
     # Создание пользователя
     def post(self):
+        db_sess = create_session()
         args = self.parser.parse_args()
         abort_if_type_invalid(args['type'])
         abort_if_invalid_data(args['type'], args)
@@ -109,14 +120,16 @@ class UsersListResources(Resource):
         user.set_password(args['password'])
         db_sess.add(user)
         db_sess.commit()
-        return jsonify({'User ID': user.id})
+        res = jsonify({'User ID': user.id})
+        db_sess.close()
+        return res
 
 
 def abort_if_invalid_data(type, args):
     if type == 'Masters':
         list_args = [args['description'], args['address'], args['social'], args['category']]
         if not all(list_args):
-            abort(400, message=f"Invalid data for creating a user.")
+            abort(400, message="Invalid data for creating a user.")
 
 
 # Проверка валидности типа
@@ -127,6 +140,8 @@ def abort_if_type_invalid(type):
 
 # Проверка наличия пользователя
 def abort_if_users_not_found(user_id):
+    db_sess = create_session()
     user = db_sess.query(Users).get(user_id)
     if not user:
         abort(404, message=f"Users {user_id} not found")
+    db_sess.close()

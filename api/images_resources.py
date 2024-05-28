@@ -19,7 +19,7 @@ class ImagesResources(Resource):
         db_sess = create_session()
         abort_if_image_not_found(image_id)
         image = db_sess.query(Images).get(image_id)
-        res = jsonify({'image': image.to_dict(only=('id', 'master_id', 'type', 'name', 'data'))})
+        res = jsonify({'image': image.to_dict(only=('id', 'master_id', 'type', 'name', 'data', 'description'))})
         db_sess.close()
         return res
 
@@ -66,7 +66,7 @@ class ImagesListResources(Resource):
         db_sess = create_session()
         images = db_sess.query(Images).all()
         res = jsonify([{'image': image.to_dict(
-            only=('id', 'master_id', 'name', 'type', 'data'))} for image in images])
+            only=('id', 'master_id', 'name', 'type', 'data', 'description'))} for image in images])
         db_sess.close()
         return res
 

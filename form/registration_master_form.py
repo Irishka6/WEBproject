@@ -4,7 +4,7 @@ from wtforms import StringField, SubmitField, SelectField, TextAreaField
 from wtforms.validators import DataRequired
 
 
-class RegisterFormMaster(FlaskForm):
+class RegistrationMasterForm(FlaskForm):
     photo = FileField('Выберете аватарку')
     category = SelectField('Специальность', choices=['Мастер маникюра(педикюра)', 'Парикмахер', 'Визажист'])
     address = StringField('Адрес (где будет предоставляться услуга)', validators=[DataRequired()])

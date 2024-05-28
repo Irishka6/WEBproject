@@ -5,77 +5,138 @@
     background: -webkit-linear-gradient(to right, #654ea3, #eaafc8);
     background: linear-gradient(to right, #654ea3, #eaafc8);
     min-height: 100vh;">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <div class="container">
-    <div class="row py-5 px-4">
-        <div  class="col-md-auto">
-            <!-- Profile widget -->
-            <div class="bg-white shadow rounded overflow-hidden" >
-                <div class="px-4 pt-0 pb-4" style="background: rgb{{photo}};">
-                    <div class="media align-items-end profile-header" >
-                        <div class="profile mr-3" style="transform: translateY(5rem);"><img src="{{url_for('get_image', image_id=avatar.id)}}" alt="..." width="300" class="rounded mb-2 img-thumbnail"></div>
-
-                            <div class="media-body mb-5 text-white">
-
-                            <h1 class="mt-0 mb-0">{{ master.nick_name }}</h1>
-                            <p class="small mb-4" style="font-size: 2rem"> <i class="fa fa-map-marker mr-2"></i>{{master.description}}</p>
-                            <p class="small mb-4" style="font-size: 1.75rem"> <i class="fa fa-map-marker mr-2"></i>{{master.social}}</p>
-                                <div class="container" >
-                                    <div class="row">
-                                        {% if current_user.id == master.id %}
-                                        <div class="col">
-                                            <a href="/editing_master/{{master.id}}" class="btn btn-dark btn-sm btn-block">Изменить профиль</a>
-                                        </div>
-                                        {% endif %}
-                                        <div class="col">
-                                            <p>
-                                                <button class="btn btn-dark btn-sm btn-block"  type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                                                    Прайс
-                                                </button>
-                                            </p>
-                                        </div>
-                                        {% if current_user.id == master.id %}
-                                        <div class="col">
-                                            <a href="/adding_service/{{master.id}}" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                        </div>
+  <div class="row py-5 px-4">
+    <div class="w-100 md-auto">
+      <!-- Profile widget -->
+      <div class="bg-white shadow rounded overflow-hidden">
+        <div class="px-4 pt-0 pb-4" style="background: rgb{{photo}};">
+          <div class="media align-items-end profile-header" >
+            <div class="profile mr-3" style="transform: translateY(1rem);">
+              <img src="{{url_for('get_image', image_id=avatar.id)}}" alt="..." style="wight: 300px; height: 300px" class="rounded mb-2 img-thumbnail">
+            </div>
+            <div class="media-body mb-5 text-white">
+              <h1 class="mt-0 mb-0">{{ master.nick_name }}</h1>
+              <p class="small mb-4" style="font-size: 2rem"> <i class="fa fa-map-marker mr-2"></i>{{master.description}}</p>
+              <p class="small mb-4" style="font-size: 1.75rem"> <i class="fa fa-map-marker mr-2"></i>{{master.social}}</p>
+              <div class="container" >
+                <div class="row">
+                  {% if current_user.id == master.id %}
+                    <div class="col">
+                      <a href="/editing_master/{{master.id}}" class="btn btn-dark btn-sm btn-block">Изменить профиль</a>
                     </div>
-                </div>
-
-                <div class="py-4 px-4">
-                                <div class="collapse" id="collapseExample">
-                                    <div class="card card-body">
-                                        <table class="table table-bordered">
-                                            <thead>
-                                            <tr>
-                                                <th scope="col">Название услуги</th>
-                                                <th scope="col">Стоймость</th>
-                                                <th scope="col">Описание</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {% for service in master.services %}
-                                            <tr>
-                                                <td>{{service.name}}</td>
-                                                <td>{{service.price}}</td>
-                                                <td>{{service.description}}</td>
-                                                {% if current_user.id == master.id %}
-                                                <td><a href="/delete_service/{{service.id}}/{{master.id}}" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
-                                                {% endif %}
-                                            </tr>
-                                            {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                  {% endif %}
+                  <div class="col">
+                    <p>
+                      <button class="btn btn-dark btn-sm btn-block"  type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                        Услуги
+                      </button>
+                    </p>
+                  </div>
+                  {% if current_user.type == "Clients" %}
+                  <div class="col">
+                    <a href="/sign_up/{{master.id}}" class="btn btn-dark btn-sm btn-block">Записаться</a>
+                  </div>
+                  {% endif %}
+                  {% if current_user.id == master.id %}
+                    <div class="col">
+                      <a href="/adding_service/{{master.id}}" class="btn btn-dark btn-sm btn-block">Добавить услугу</a>
                     </div>
+                  {% endif %}
                 </div>
-            </div><!-- End profile widget -->
-
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
+
+        <div class="py-4 px-4">
+          <div class="collapse" id="collapseExample">
+            <div class="card card-body">
+              {% if master.services|length != 0 %}
+              <table class="table table-bordered">
+                <thead>
+                <tr>
+                  <th scope="col">Название услуги</th>
+                  <th scope="col">Стоймость</th>
+                  <th scope="col">Длительность</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for service in master.services %}
+                <tr>
+                  <td>{{service.name}}</td>
+                  <td>{{service.price}}</td>
+                  <td>{{service.duration}}</td>
+                  {% if current_user.id == master.id %}
+                    <td><a href="/delete_service/{{service.id}}/{{master.id}}" class="btn btn-dark btn-sm btn-block">Удаление услуги</a></td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+                <h3 class="text-center">Пока что нет услуг</h3>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if works|length != 0 %}
+        <div class="py-4 px-4">
+          <h1 class="text-center">Примеры работ</h1>
+          <div id="carousel" class="carousel slide" data-ride="carousel">
+            <ul class="carousel-indicators">
+              {% for i in works %}
+              {% if loop.first %}
+              <li data-target="#carousel" data-slide-to="0" class="active"></li>
+              {% else %}
+              <li data-target="#carousel" data-slide-to="{{loop.index}}"></li>
+              {% endif %}
+              {% endfor %}
+            </ul>
+            <div class="carousel-inner">
+              {% for img in works %}
+              {% if loop.first %}
+              <div class="carousel-item active">
+                <img src="{{url_for('get_image', image_id=img.id)}}" width="1024" height="720" class="rounded w-100" alt="...">
+                <div class="carousel-caption">
+                  <h5>{{img.description}}</h5>
+                </div>
+              </div>
+              {% else %}
+              <div class="carousel-item">
+                <img src="{{url_for('get_image', image_id=img.id)}}" width="1024" height="720" class="rounded w-100" alt="...">
+                <div class="carousel-caption">
+                  <h5>{{img.description}}</h5>
+                </div>
+              </div>
+              {% endif %}
+              {% endfor %}
+              <a class="carousel-control-prev" href="#carousel" data-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </a>
+              <a class="carousel-control-next" href="#carousel" data-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% else %}
+          <h1 class="text-center">Примеров работ пока нет</h1>
+        {% endif %}
+        {% if current_user.id == master.id %}
+        <div class="text-center py-4">
+          <a class="btn btn-dark btn-lg text-white" href="/editing_works/{{master.id}}">
+            Изменить примеры работ
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div><!-- End profile widget -->
+  </div>
 </div>
 </body>
 {% endblock %}

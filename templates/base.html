@@ -1,40 +1,37 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet"
-          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-          crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <title>{{title}}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+        crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <title>{{title}}</title>
 </head>
 <body style="background-color: #f2f1f0">
 <header>
     <nav class="navbar" style="background-color: #dcdcdc">
         <a class="navbar-brand" href="/" style="color: #85736e; font-size: 40px;">YourMasterOnline</a>
         {% if current_user.is_authenticated %}
-        <div class="btn-group">
-          <button type="button" class="btn dropdown-toggle" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-            {{ current_user.nick_name }}
-          </button>
-          <ul class="dropdown-menu">
-              {% if current_user.type == "Masters" %}
-                <li><a class="dropdown-item" href="/page_master/{{ current_user.id }}">Профиль</a></li>
-              {% else %}
-                <li><a class="dropdown-item" href="https://t.me/MasterEntryBot">Мои записи</a></li>
-              {% endif %}
-            <li><a class="dropdown-item" href="/logout">Выйти</a></li>
-          </ul>
-        </div>
-
+          <div class="btn-group dropleft">
+            <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              {{ current_user.nick_name }}
+            </button>
+            <ul class="dropdown-menu">
+                {% if current_user.type == "Masters" %}
+                  <li><a class="dropdown-item" href="/page_master/{{ current_user.id }}">Профиль</a></li>
+                {% endif %}
+                <li><a class="dropdown-item" href="/appointments">Мои записи</a></li>
+                <li><a class="dropdown-item" href="/logout">Выйти</a></li>
+            </ul>
+          </div>
         {% else %}
-            <p>
-                <a class="btn" href="/registration" style="background-color:#b5aaa7; color:#ffffff">Зарегистрироваться</a>
-                <a class="btn" href="/login" style="background-color:#85736e; color:#ffffff">Войти</a>
-            </p>
+          <p>
+            <a class="btn" href="/registration" style="background-color:#b5aaa7; color:#ffffff">Зарегистрироваться</a>
+            <a class="btn" href="/login" style="background-color:#85736e; color:#ffffff">Войти</a>
+          </p>
         {% endif %}
     </nav>
 </header>

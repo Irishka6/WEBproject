@@ -1,8 +1,10 @@
+import requests
+
 from data.db_session import global_init, create_session
 from flask import Flask, render_template, redirect, send_file
 import string
 from random import choice
-from flask_login import login_user, LoginManager, current_user, login_required, logout_user
+from flask_login import login_user, LoginManager, current_user, logout_user, login_required
 from flask_restful import abort, Api
 from api.users_resources import UsersResources, UsersListResources
 from api.services_resources import ServicesResources, ServicesListResources
@@ -12,10 +14,14 @@ from data.category import Category
 from data.images import Images
 from data.users import Users, Masters, Clients
 from data.services import Services
-from form.loginform import LoginForm
-from form.registr import RegisterForm
-from form.regmast import RegisterFormMaster
-from form.dobyslyg import DobyslForm
+from data.appointments import Appointments
+from form.login_form import LoginForm
+from form.registration_form import RegistrationForm
+from form.registration_master_form import RegistrationMasterForm
+from form.adding_service_form import AddingServiceForm
+from form.sign_up_form import SignUpForm
+from form.adding_works_form import AddingWorksForm
+from datetime import datetime
 from PIL import Image
 import base64
 from io import BytesIO
@@ -57,7 +63,7 @@ class App(Flask):
         db_sess = create_session()
         photos = db_sess.query(Images).all()
         if len(list(filter(lambda x: x.type == 'default', photos))) == 0:
-            with open('/home/ArtemADD/WEBproject/static/img/default.jpg', 'rb') as f:
+            with open('static/img/default.jpg', 'rb') as f:
                 d = base64.b64encode(f.read())
             img = Images(name='default.jpg', data=d, type='default')
             db_sess.add(img)
@@ -83,12 +89,20 @@ def logout():
 
 
 @app.route("/", methods=['GET', 'POST'])
-def index1():
-    return render_template("index.html")
+def index():
+    sess = create_session()
+    login_user(sess.query(Users).filter(Users.type == 'Clients').first())
+    sess.close()
+    if not current_user.is_authenticated or current_user.type == 'Clients':
+        return render_template("index.html", title='Главная страница')
+    else:
+        return redirect(f'/page_master/{current_user.id}')
 
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect('/')
     db_sess = create_session()
     form = LoginForm()
     if form.validate_on_submit():
@@ -106,24 +120,25 @@ def login():
     return render_template('login.html', title='Авторизация', form=form)
 
 
-@app.route("/masters/<typ>")
-def masters(typ):
+@app.route("/masters/<type>")
+def masters(type):
+    if not current_user.is_authenticated:
+        return redirect('/login')
     db_sess = create_session()
     users = db_sess.query(Masters).all()
-    user = []
-    for i in users:
-        if i.category.__repr__()[1:len(i.category.__repr__()) - 1] == typ:
-            user.append(i)
+    users = list(filter(lambda x: x.category[0].name == type, users))
     ids_avatars = asyncio.run(main_get_avatar(users))
-    res = render_template("masters.html", users=user, avatars=ids_avatars)
+    res = render_template("masters.html", users=users, avatars=ids_avatars, title=type)
     db_sess.close()
     return res
 
 
 @app.route("/registration", methods=['GET', 'POST'])
 def registration():
+    if current_user.is_authenticated:
+        return redirect('/')
     db_sess = create_session()
-    form = RegisterForm()
+    form = RegistrationForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
             return render_template("registration.html", name='', title='Регистрация',
@@ -135,7 +150,7 @@ def registration():
                                    form=form,
                                    message="Такой пользователь уже есть")
 
-        if form.use.data == 'Мастер':
+        if form.user.data == 'Мастер':
             user = Masters()
         else:
             user = Clients()
@@ -146,7 +161,7 @@ def registration():
         db_sess.commit()
         login_user(user)
         db_sess.close()
-        if form.use.data == 'Мастер':
+        if form.user.data == 'Мастер':
             return redirect(f"/registration_master/{user.id}")
         return redirect('/')
     db_sess.close()
@@ -154,12 +169,13 @@ def registration():
 
 
 @app.route("/registration_master/<int:master_id>", methods=["GET", "POST"])
-@login_required
 def registration_master(master_id):
+    if not current_user.is_authenticated:
+        return redirect('/')
     db_sess = create_session()
     master = db_sess.query(Masters).get(master_id)
     if current_user.id == master.id and master.registrate is False:
-        form = RegisterFormMaster()
+        form = RegistrationMasterForm()
         if form.validate_on_submit():
             master.category.append(db_sess.query(Category).filter(Category.name==form.category.data).first())
             master.address = form.address.data
@@ -178,12 +194,13 @@ def registration_master(master_id):
 
 
 @app.route("/editing_master/<int:master_id>", methods=["GET", "POST"])
-@login_required
 def editing_master(master_id):
+    if not current_user.is_authenticated:
+        return redirect('/')
     db_sess = create_session()
     master = db_sess.query(Masters).get(master_id)
     if current_user.id == master.id:
-        form = RegisterFormMaster()
+        form = RegistrationMasterForm()
         if form.validate_on_submit():
             master.category[0] = db_sess.query(Category).filter(Category.name==form.category.data).first()
             master.address = form.address.data
@@ -211,17 +228,19 @@ def editing_master(master_id):
     db_sess.close()
 
 
-@app.route("/page_master/<int:user_id>")
-@login_required
-def page_master(user_id):
+@app.route("/page_master/<int:master_id>")
+def page_master(master_id):
+    if not current_user.is_authenticated:
+        return redirect('/')
     db_sess = create_session()
-    user = db_sess.query(Users).get(user_id)
-    img = list(filter(lambda x: x.type == 'avatar', user.images))
-    if not img:
-        img = db_sess.query(Images).filter(Images.type == 'default').first()
+    user = db_sess.query(Users).filter(Users.id == master_id).first()
+    works = list(filter(lambda x: x.type == 'works', user.images))
+    avatar = list(filter(lambda x: x.type == 'avatar', user.images))
+    if not avatar:
+        avatar = db_sess.query(Images).filter(Images.type == 'default').first()
     else:
-        img = img[0]
-    im = Image.open(BytesIO(base64.b64decode(img.data)))
+        avatar = avatar[0]
+    im = Image.open(BytesIO(base64.b64decode(avatar.data)))
     pi = im.load()
     r, g, b, total = 0, 0, 0, 0
     x, y = im.size
@@ -232,9 +251,55 @@ def page_master(user_id):
             g += pi[i, j][1]
             b += pi[i, j][2]
     rgb = str((r // total, g // total, b // total))
-    res = render_template("page_master.html", master=user, avatar=img, photo=rgb)
+    res = render_template("page_master.html", master=user, avatar=avatar, photo=rgb,
+                          title=user.nick_name, works=works)
     db_sess.close()
     return res
+
+
+@app.route("/editing_works/<int:master_id>")
+def editing_works(master_id):
+    if not current_user.is_authenticated:
+        return redirect('/')
+    db_sess = create_session()
+    master = db_sess.query(Users).filter(Users.id == master_id).first()
+    images = list(filter(lambda x: x.type == 'works', master.images))
+    res = render_template('editing_works.html', title='Изменение примеров', images=images)
+    db_sess.close()
+    return res
+
+
+@app.route("/adding_works/<int:master_id>", methods=["GET", "POST"])
+def adding_works(master_id):
+    if not current_user.is_authenticated:
+        return redirect('/')
+    form = AddingWorksForm()
+    if form.validate_on_submit():
+        db_sess = create_session()
+        image = Images(
+            type='works',
+            master_id=master_id,
+            data=base64.b64encode(form.photo.data.read()),
+            name=form.photo.data.filename,
+            description=form.description.data
+        )
+        db_sess.add(image)
+        db_sess.commit()
+        db_sess.close()
+        return redirect(f'/editing_works/{master_id}')
+    return render_template('adding_works.html', form=form)
+
+
+@app.route("/delete_work/<int:id>")
+@login_required
+def delete_work(id):
+    db_sess = create_session()
+    img = db_sess.query(Images).filter(Images.id==id).first()
+    master_id = img.master_id
+    db_sess.delete(img)
+    db_sess.commit()
+    db_sess.close()
+    return redirect(f'/editing_works/{master_id}')
 
 
 async def get_avatar(user):
@@ -258,22 +323,53 @@ async def main_get_avatar(users):
 @app.route('/image/<int:image_id>')
 def get_image(image_id):
     db_sess = create_session()
-    image = db_sess.query(Images).get(image_id)
+    image = db_sess.query(Images).filter(Images.id==image_id).first()
     res = send_file(BytesIO(base64.b64decode(image.data)), mimetype='image/jpeg')
     db_sess.close()
     return res
 
 
-@app.route("/zapis/<int:id_master>")
-@login_required
-def zapis(id_master):
-    return render_template("entry.html", master_id=id_master)
+@app.route("/appointments/")
+def main_appointments():
+    if not current_user.is_authenticated:
+        return redirect('/')
+    db_sess = create_session()
+    appointments = db_sess.query(Appointments).filter(
+        (Appointments.master_id == current_user.id) | (Appointments.client_id == current_user.id)).all()
+    if len(appointments) > 5:
+        res = redirect('/appointments/1')
+    else:
+        masters_names = {x.master_id: db_sess.query(Users).filter(Users.id == x.master_id).first().nick_name
+                         for x in appointments}
+        res = render_template('appointments.html', appointments=appointments, page=0, title='Записи',
+                              masters=masters_names)
+    db_sess.close()
+    return res
+
+
+@app.route("/appointments/<int:page>")
+def page_appointments(page):
+    if not current_user.is_authenticated:
+        return redirect('/')
+    db_sess = create_session()
+    appointments = db_sess.query(Appointments).filter(
+        (Appointments.master_id == current_user.id) | (Appointments.client_id == current_user.id)).all()
+    pages = len(appointments) // 5 if len(appointments) % 5 == 0 else len(appointments) // 5 + 1
+    appointments = appointments[5 * (page - 1):5 * page] if pages == page else appointments[5 * (page - 1):-1]
+    masters_names = {x.master_id: db_sess.query(Users).filter(Users.id == x.master_id).first().nick_name
+                     for x in appointments}
+    res = render_template('appointments.html', appointments=appointments, page=page, pages=pages,
+                          title='Записи', masters=masters_names)
+    db_sess.close()
+    return res
 
 
 @app.route("/adding_service/<int:id>", methods=["GET", "POST"])
 def adding_service(id):
+    if not current_user.is_authenticated:
+        return redirect('/')
     db_sess = create_session()
-    form = DobyslForm()
+    form = AddingServiceForm()
     if form.validate_on_submit():
         service = Services(master_id=id,
                            name=form.name.data,
@@ -283,10 +379,11 @@ def adding_service(id):
         db_sess.commit()
         db_sess.close()
         return redirect(f"/page_master/{id}")
-    return render_template("dobysl.html", form=form)
+    return render_template("adding_service.html", form=form)
 
 
-@app.route("/delete_service/<int:id>/<int:master_id>", methods=["GET", "POST"])
+@app.route("/delete_service/<int:id>/<int:master_id>")
+@login_required
 def delete_service(id, master_id):
     db_sess = create_session()
     service = db_sess.query(Services).filter(Services.id == id).first()
@@ -294,6 +391,39 @@ def delete_service(id, master_id):
     db_sess.commit()
     db_sess.close()
     return redirect(f"/page_master/{master_id}")
+
+
+@app.route("/sign_up/<int:id>", methods=["GET", "POST"])
+def sign_up(id):
+    if not current_user.is_authenticated:
+        return redirect('/')
+    db_sess = create_session()
+    master = db_sess.query(Users).filter(Users.id == id).first()
+    choices = {f'{x.name} {x.duration} {x.price}': x for x in master.services}
+    form = SignUpForm()
+    form.choice.choices = list(choices.keys())
+    if form.validate_on_submit():
+        dt = datetime.combine(form.date.data, form.time.data)
+        appointment = Appointments(master_id=id,
+                           client_id=current_user.id,
+                           datetime=dt)
+        appointment.services.extend(list(map(lambda x: choices[x], form.choice.data)))
+        db_sess.add(appointment)
+        db_sess.commit()
+        db_sess.close()
+        return redirect(f"/page_master/{id}")
+    return render_template("sign_up.html", form=form, master=master)
+
+
+@app.route("/delete_appointment/<int:id>")
+@login_required
+def delete_appointment(id):
+    db_sess = create_session()
+    appointments = db_sess.query(Appointments).filter(Appointments.id == id).first()
+    db_sess.delete(appointments)
+    db_sess.commit()
+    db_sess.close()
+    return redirect(f"/appointments")
 
 
 app.run()

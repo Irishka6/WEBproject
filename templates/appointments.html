@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if appointments|length == 0 %}
+  <div class="text-center">
+    <h1 class="">Записей пока нет!</h1>
+    {% if current_user.type == 'Clients' %}
+    <a class="btn btn-dark btn-lg w-20" href="/">На главную</a>
+    {% else %}
+    <a class="btn btn-dark btn-lg w-20" href="/page_master/{{current_user.id}}">Назад</a>
+    {% endif %}
+  </div>
+{% else %}
+<div class="px-4 py-4">
+  <ul class="list-group">
+    {% for item in appointments%}
+      <li class="list-group-item">
+        <div class="text-center">
+          <div class="row">
+            <div class="col">
+              <h3>Запись к {{masters[item.master_id]}} на {{item.datetime}}</h3>
+              <button class="btn btn-lg" style="background-color:#85736e; color:#ffffff"  type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{item.id}}" aria-expanded="false" aria-controls="collapseExample">
+                Услуги
+              </button>
+            </div>
+            <div class="col-0">
+              <a class="btn btn-lg btn-danger col" style="transform: translateY(1rem)" href="/delete_appointment/{{item.id}}">Отменить</a>
+            </div>
+          </div>
+          <div class="collapse py-2" id="collapse{{item.id}}">
+            <div class="card card-body">
+              <table class="table table-bordered">
+                <thead>
+                <tr>
+                  <th scope="col">Название услуги</th>
+                  <th scope="col">Стоймость</th>
+                  <th scope="col">Длительность</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for service in item.services %}
+                <tr>
+                  <td>{{service.name}}</td>
+                  <td>{{service.price}}</td>
+                  <td>{{service.duration}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% if page != 0 %}
+<nav  aria-label="Page navigation example">
+  <ul class="pagination nav justify-content-center">
+    {% if page == 1 %}
+      <li class="page-item disabled">
+        <a class="page-link" href="/appointments/{{page}}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      <li class="page-item active" aria-current="page"><a class="page-link" href="/appointments/{{page}}">{{page}}</a></li>
+      <li class="page-item"><a class="page-link" href="/appointments/{{page + 1}}">{{page + 1}}</a></li>
+      {% if page + 2 <= pages%}
+        <li class="page-item"><a class="page-link" href="/appointments/{{page + 2}}">{{page + 2}}</a></li>
+      {% endif %}
+      <li class="page-item">
+        <a class="page-link" href="/appointments/{{page + 1}}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    {% elif page == pages %}
+      <li class="page-item">
+        <a class="page-link" href="/appointments/{{page - 1}}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% if page - 2 >= 1%}
+        <li class="page-item"><a class="page-link" href="/appointments/{{page - 2}}">{{page - 2}}</a></li>
+      {% endif %}
+      <li class="page-item"><a class="page-link" href="/appointments/{{page - 1}}">{{page - 1}}</a></li>
+      <li class="page-item active" aria-current="page"><a class="page-link" href="/appointments/{{page}}">{{page}}</a></li>
+      <li class="page-item disabled">
+        <a class="page-link" href="/appointments/{{page}}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item">
+        <a class="page-link" href="/appointments/{{page - 1}}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      <li class="page-item"><a class="page-link" href="/appointments/{{page - 1}}">{{page - 1}}</a></li>
+      <li class="page-item active" aria-current="page"><a class="page-link" href="/appointments/{{page}}">{{page}}</a></li>
+      <li class="page-item"><a class="page-link" href="/appointments/{{page + 1}}">{{page + 1}}</a></li>
+      <li class="page-item">
+        <a class="page-link" href="/appointments/{{page + 1}}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -14,7 +14,7 @@ def global_init():
     if __factory:
         return
 
-    conn_str = f'sqlite:///db/db.sqlite?check_same_thread=False'
+    conn_str = 'sqlite:///db/db.sqlite?check_same_thread=False'
     print(f"Подключение к базе данных по адресу {conn_str}")
 
     engine = sa.create_engine(conn_str, poolclass=QueuePool)

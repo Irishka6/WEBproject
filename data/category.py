@@ -17,7 +17,7 @@ class Category(SqlAlchemyBase):
     __tablename__ = 'Category'  # Имя таблицы
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True,
                            autoincrement=True)  # id
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)  # имя Категории
+    name = sqlalchemy.Column(sqlalchemy.String(150), nullable=True)  # имя Категории
 
     def __repr__(self):
         return f'{self.name}'

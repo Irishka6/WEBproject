@@ -1,7 +1,5 @@
-import requests
-
 from data.db_session import global_init, create_session
-from flask import Flask, render_template, redirect, send_file
+from flask import Flask, render_template, redirect, send_file, url_for
 import string
 from random import choice
 from flask_login import login_user, LoginManager, current_user, logout_user, login_required
@@ -90,9 +88,6 @@ def logout():
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    sess = create_session()
-    login_user(sess.query(Users).filter(Users.type == 'Clients').first())
-    sess.close()
     if not current_user.is_authenticated or current_user.type == 'Clients':
         return render_template("index.html", title='Главная страница')
     else:
@@ -426,4 +421,5 @@ def delete_appointment(id):
     return redirect(f"/appointments")
 
 
-app.run()
+if __name__ == '__main__':
+    app.run()

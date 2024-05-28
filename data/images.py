@@ -10,6 +10,6 @@ class Images(SqlAlchemyBase, SerializerMixin):
     type = sa.Column(sa.String)
     master_id = sa.Column(sa.Integer, ForeignKey('Masters.id'))
     data = sa.Column(sa.BLOB(length=16777216))
-    name = sa.Column(sa.String)
+    name = sa.Column(sa.String(500))
     description = sa.Column(sa.String(600))
     master = orm.relationship('Masters')
